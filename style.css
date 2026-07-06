@@ -1188,3 +1188,23 @@ body {
     display: none !important;
   }
 }
+
+/* Classic theme solid flat overrides */
+.theme-classic .piece.player {
+  background: var(--color-player) !important;
+  box-shadow: none !important;
+}
+
+.theme-classic .piece.ai {
+  background: var(--color-ai) !important;
+  box-shadow: none !important;
+}
+
+.theme-classic .board-plate {
+  fill: var(--board-color) !important;
+}
+
+.theme-classic .board-container {
+  background-color: var(--board-color) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+}

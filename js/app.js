@@ -23,7 +23,6 @@ class Connect4App {
     this.streak = 0;
     
     this.isThinking = false;
-    this.isHinting = false;
     this.isReplaying = false;
     this.replayStep = 0;
     
@@ -43,24 +42,15 @@ class Connect4App {
       this.worker = new Worker(new URL('./worker.js', import.meta.url));
       
       this.worker.onmessage = (e) => {
-        const { bestMove, type } = e.data;
-        
-        if (type === 'hint') {
-          this.isHinting = false;
-          this.ui.setHintDisabled(false);
-          this.ui.showHint(bestMove);
-        } else {
-          this.isThinking = false;
-          this.executeAIMove(bestMove);
-        }
+        const { bestMove } = e.data;
+        this.isThinking = false;
+        this.executeAIMove(bestMove);
       };
       
       this.worker.onerror = (err) => {
         console.error('AI Web Worker Error:', err);
         this.isThinking = false;
-        this.isHinting = false;
         this.ui.setThinking(false);
-        this.ui.setHintDisabled(false);
       };
     } catch (e) {
       console.warn('Failed to initialize Web Worker. Falling back to main-thread AI execution.', e);
@@ -75,7 +65,6 @@ class Connect4App {
       () => this.undoMove(),
       (config) => this.handleConfigChange(config),
       (action) => this.handleReplayAction(action),
-      () => this.handleHintRequest(),
       (col, isHovering) => this.handleColumnHover(col, isHovering),
       (tutAction) => this.handleTutorialAction(tutAction)
     );
@@ -124,7 +113,6 @@ class Connect4App {
     
     this.ui.setTurn(this.game.currentPlayer, this.game.currentPlayer === 2);
     this.ui.setUndoDisabled(true);
-    this.ui.setHintDisabled(false);
     this.ui.updateScores(this.scores.player, this.scores.ai, this.scores.draws, this.streak);
     
     // Hold starting AI calculations if the tutorial overlay is showing/active
@@ -135,7 +123,7 @@ class Connect4App {
 
   handlePlayerClick(col) {
     // Prevent moves if game over, AI's turn, AI is computing, replaying, or tutorial active
-    if (this.game.gameOver || this.game.currentPlayer !== 1 || this.isThinking || this.isReplaying || this.isHinting || this.isTutorialActive) {
+    if (this.game.gameOver || this.game.currentPlayer !== 1 || this.isThinking || this.isReplaying || this.isTutorialActive) {
       return;
     }
 
@@ -157,48 +145,13 @@ class Connect4App {
 
   handleColumnHover(col, isHovering) {
     // Hide ghost piece if not hovering or if actions are locked
-    if (!isHovering || this.game.gameOver || this.game.currentPlayer !== 1 || this.isThinking || this.isReplaying || this.isHinting || this.isTutorialActive) {
+    if (!isHovering || this.game.gameOver || this.game.currentPlayer !== 1 || this.isThinking || this.isReplaying || this.isTutorialActive) {
       this.ui.hideGhostPiece();
       return;
     }
 
     const row = this.game.getLowestEmptyRow(col);
     this.ui.showGhostPiece(col, row, 1);
-  }
-
-  handleHintRequest() {
-    if (this.game.gameOver || this.game.currentPlayer !== 1 || this.isThinking || this.isReplaying || this.isHinting || this.isTutorialActive) {
-      return;
-    }
-
-    this.isHinting = true;
-    this.ui.setHintDisabled(true);
-
-    const depthMap = {
-      easy: 2,
-      medium: 4,
-      elite: 8
-    };
-    const depth = depthMap[this.difficulty] || 8;
-
-    // Send board state to Web Worker to find the best player move (aiPlayer: 1)
-    if (this.worker) {
-      this.worker.postMessage({
-        board: [...this.game.board],
-        depth: depth,
-        aiPlayer: 1,
-        type: 'hint'
-      });
-    } else {
-      // Fallback
-      setTimeout(async () => {
-        const { getBestMove } = await import('./ai.js');
-        const bestMove = getBestMove([...this.game.board], depth, 1);
-        this.isHinting = false;
-        this.ui.setHintDisabled(false);
-        this.ui.showHint(bestMove);
-      }, 50);
-    }
   }
 
   triggerAIMove() {
@@ -271,7 +224,6 @@ class Connect4App {
 
     this.ui.setTurn(this.game.currentPlayer, this.game.currentPlayer === 2);
     this.ui.setUndoDisabled(this.game.history.length === 0);
-    this.ui.setHintDisabled(false);
 
     if (this.game.currentPlayer === 2 && !this.game.gameOver) {
       this.triggerAIMove();
@@ -316,7 +268,6 @@ class Connect4App {
       }
 
       this.ui.updateScores(this.scores.player, this.scores.ai, this.scores.draws, this.streak);
-      this.ui.setHintDisabled(true);
       
       // Delay game-over overlay presentation to let the highlights and confetti breathe
       setTimeout(() => {
@@ -340,7 +291,6 @@ class Connect4App {
       this.replayStep = 0;
       this.ui.hideGameOver();
       this.ui.setUndoDisabled(true);
-      this.ui.setHintDisabled(true);
       this.game.reset();
       this.game.setStartingPlayer(this.lastGameStarter);
       this.ui.clearBoard();

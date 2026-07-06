@@ -206,7 +206,6 @@ export class Connect4UI {
     this.currentDifficultyDisplay = document.getElementById('current-difficulty-display');
     this.currentThemeDisplay = document.getElementById('current-theme-display');
     
-    this.hintBtn = document.getElementById('hint-btn');
     this.undoBtn = document.getElementById('undo-btn');
     this.resetBtn = document.getElementById('reset-btn');
     this.playAgainBtn = document.getElementById('play-again-btn');
@@ -241,7 +240,7 @@ export class Connect4UI {
     });
   }
 
-  setupEventListeners(onColumnClick, onReset, onUndo, onConfigChange, onReplayAction, onHintRequest, onColumnHover, onTutorialAction) {
+  setupEventListeners(onColumnClick, onReset, onUndo, onConfigChange, onReplayAction, onColumnHover, onTutorialAction) {
     const handleColumnSelect = (colIndex) => {
       this.synth.init();
       onColumnClick(colIndex);
@@ -293,12 +292,6 @@ export class Connect4UI {
         this.soundOnIcon.classList.remove('hidden');
         this.soundOffIcon.classList.add('hidden');
       }
-    });
-
-    // Hint button
-    this.hintBtn.addEventListener('click', () => {
-      this.synth.playClick();
-      onHintRequest();
     });
 
     // Chess.com Interactive Replay Button Action triggers
@@ -602,20 +595,6 @@ export class Connect4UI {
     }
   }
 
-  showHint(col) {
-    const boardWidth = this.boardOuter.clientWidth;
-    
-    const glowDiv = document.createElement('div');
-    glowDiv.className = 'hint-highlight';
-    glowDiv.style.left = `calc(${col} * 14.2857%)`;
-    
-    this.boardOuter.appendChild(glowDiv);
-    
-    setTimeout(() => {
-      glowDiv.remove();
-    }, 1800);
-  }
-
   updateScores(playerWins, aiWins, draws, streak = 0) {
     this.playerWinsEl.textContent = playerWins;
     this.aiWinsEl.textContent = aiWins;
@@ -732,10 +711,6 @@ export class Connect4UI {
     this.undoBtn.disabled = disabled;
   }
 
-  setHintDisabled(disabled) {
-    this.hintBtn.disabled = disabled;
-  }
-
   // Tutorial Dialog Helper Methods
   showTutorialOptin() {
     this.tutOptinModal.classList.remove('hidden');
@@ -762,10 +737,10 @@ export class Connect4UI {
         pos: 'top-left'
       },
       {
-        target: this.hintBtn.parentElement, // Selects the action buttons panel container
-        title: '3 OF 4: PLAY HELPERS',
-        text: 'Tap GET HINT to calculate optimal moves in real-time, or UNDO MOVE to correct misplays.',
-        pos: 'right-sidebar'
+        target: this.undoBtn,
+        title: '3 OF 4: UNDO MOVE',
+        text: 'Tap UNDO MOVE at any time to correct misplays and test alternative strategies.',
+        pos: 'right'
       },
       {
         target: this.defaultTurnIndicator.parentElement, // Selects the status bar container
