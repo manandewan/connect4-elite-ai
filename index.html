@@ -6,15 +6,87 @@
   <title>Connect 4 Elite - Play against Advanced AI</title>
   <meta name="description" content="Play Connect 4 against a highly competitive, elite AI featuring minimax search with alpha-beta pruning. Sleek glassmorphism design with fluid animations and responsive gameplay.">
   <link rel="stylesheet" href="style.css">
-  <!-- Import Orbitron and Inter Google Fonts for futuristic, readable typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="theme-neon"> <!-- Will change dynamically based on selected theme -->
+  <!-- Canvas Confetti Layer (spread across the window) -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Interactive Home Page Landing Overlay -->
+  <div id="home-screen" class="overlay">
+    <div class="home-card card">
+      <header class="home-header">
+        <h1 class="logo">CONNECT <span class="accent-text">4</span> <span class="sub-logo">ELITE</span></h1>
+        <p class="tagline">An Advanced Minimax AI Opponent</p>
+      </header>
+
+      <div class="home-options">
+        <!-- 1. Difficulty Cards -->
+        <div class="home-section">
+          <h3>SELECT DIFFICULTY</h3>
+          <div class="card-selector difficulty-selector">
+            <div class="select-option" data-value="easy">
+              <span class="opt-title">EASY</span>
+              <span class="opt-desc">2 Plies lookahead</span>
+            </div>
+            <div class="select-option" data-value="medium">
+              <span class="opt-title">MEDIUM</span>
+              <span class="opt-desc">4 Plies lookahead</span>
+            </div>
+            <div class="select-option active" data-value="elite">
+              <span class="opt-title">ELITE AI</span>
+              <span class="opt-desc">8 Plies search depth</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Starter Selector -->
+        <div class="home-section">
+          <h3>FIRST MOVE</h3>
+          <div class="card-selector starter-selector">
+            <div class="select-option active" data-value="player">
+              <span class="opt-title">YOU</span>
+              <span class="opt-desc">Drop red pieces</span>
+            </div>
+            <div class="select-option" data-value="ai">
+              <span class="opt-title">ELITE AI</span>
+              <span class="opt-desc">AI takes initiative</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Theme Selector -->
+        <div class="home-section">
+          <h3>THEME AESTHETIC</h3>
+          <div class="card-selector theme-selector">
+            <div class="select-option active" data-value="neon">
+              <span class="opt-title">CYBER NEON</span>
+              <span class="opt-desc">Pink/Cyan on Violet</span>
+            </div>
+            <div class="select-option" data-value="classic">
+              <span class="opt-title">RETRO CLASSIC</span>
+              <span class="opt-desc">Red/Yellow on Navy</span>
+            </div>
+            <div class="select-option" data-value="mint">
+              <span class="opt-title">MINT SOLAR</span>
+              <span class="opt-desc">Emerald/Amber on Grey</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button id="start-match-btn" class="btn btn-primary btn-large pulsing-btn">
+        CHALLENGE ELITE AI
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Game Container -->
   <div class="app-container">
     <header class="app-header">
-      <h1 class="logo">CONNECT <span class="accent-text">4</span> <span class="sub-logo">ELITE</span></h1>
+      <h1 class="logo clickable-logo" id="header-logo">CONNECT <span class="accent-text">4</span> <span class="sub-logo">ELITE</span></h1>
       <p class="tagline">An Advanced Minimax AI Opponent</p>
     </header>
 
@@ -23,27 +95,22 @@
       <section class="controls-panel card">
         <h2>CONFIGURATION</h2>
         
-        <div class="control-group">
-          <label for="difficulty-select">AI DIFFICULTY</label>
-          <select id="difficulty-select">
-            <option value="easy">Easy (2 plies)</option>
-            <option value="medium">Medium (4 plies)</option>
-            <option value="elite" selected>Elite AI (8 plies)</option>
-          </select>
-        </div>
-
-        <div class="control-group">
-          <label for="starter-select">FIRST PLAYER</label>
-          <select id="starter-select">
-            <option value="player">You (Red)</option>
-            <option value="ai">Elite AI (Cyan)</option>
-          </select>
+        <div class="control-row-grid">
+          <div class="config-text-info">
+            <span class="info-label">DIFFICULTY:</span>
+            <span id="current-difficulty-display" class="info-val">Elite AI (8 plies)</span>
+          </div>
+          <div class="config-text-info">
+            <span class="info-label">THEME:</span>
+            <span id="current-theme-display" class="info-val">Cyber Neon</span>
+          </div>
         </div>
 
         <div class="score-board">
           <div class="score-box player-score">
             <span class="label">PLAYER</span>
             <span id="player-wins" class="score-val">0</span>
+            <span id="streak-counter" class="sub-label">STREAK: 0</span>
           </div>
           <div class="score-box draw-score">
             <span class="label">DRAWS</span>
@@ -56,13 +123,17 @@
         </div>
 
         <div class="action-buttons">
+          <button id="hint-btn" class="btn btn-secondary" title="Get a move suggestion from the AI">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/><circle cx="12" cy="12" r="4"/></svg>
+            GET HINT
+          </button>
           <button id="undo-btn" class="btn btn-secondary" title="Undo your last move">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
             UNDO MOVE
           </button>
-          <button id="reset-btn" class="btn btn-primary" title="Restart the game">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 11-.57-8.38l5.67-5.67"/></svg>
-            RESET GAME
+          <button id="reset-btn" class="btn btn-primary" title="Return to configuration settings">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9H16.5a4.5 4.5 0 0 1 0 9H12"/><polyline points="7 13 3 9 7 5"/></svg>
+            EXIT TO LOBBY
           </button>
         </div>
       </section>
@@ -74,11 +145,18 @@
             <div id="turn-dot" class="dot red-turn"></div>
             <span id="turn-text">YOUR TURN</span>
           </div>
-          <div id="ai-thinking" class="thinking-indicator hidden">
-            <span class="pulse-dot"></span>
-            <span class="pulse-dot"></span>
-            <span class="pulse-dot"></span>
-            <span>AI THINKING...</span>
+          <div class="right-status-group">
+            <div id="ai-thinking" class="thinking-indicator hidden">
+              <span class="pulse-dot"></span>
+              <span class="pulse-dot"></span>
+              <span class="pulse-dot"></span>
+              <span>AI THINKING...</span>
+            </div>
+            <!-- Sound Mute/Unmute Toggle -->
+            <button id="sound-toggle-btn" class="icon-btn" title="Toggle Sound">
+              <svg id="sound-on-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+              <svg id="sound-off-icon" class="hidden" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+            </button>
           </div>
         </div>
 
@@ -96,16 +174,15 @@
 
           <!-- Main Game Board Container -->
           <div id="game-board" class="board-container">
-            <!-- Game pieces will drop behind the front board cover -->
+            <!-- Game pieces layer (behind front cutout cover) -->
             <div id="pieces-layer" class="pieces-layer"></div>
             
             <!-- SVG Overlay Mask to cut out circles -->
             <svg id="board-mask-svg" viewBox="0 0 700 600" preserveAspectRatio="none" class="board-mask-svg">
               <defs>
                 <mask id="grid-mask">
-                  <!-- White background keeps the area solid -->
                   <rect width="700" height="600" fill="white" />
-                  <!-- 7 columns (cx) by 6 rows (cy) of circular holes (fill black) -->
+                  <!-- 7 columns by 6 rows of circular holes -->
                   <!-- Row 0 -->
                   <circle cx="50" cy="50" r="38" fill="black" />
                   <circle cx="150" cy="50" r="38" fill="black" />
@@ -159,14 +236,18 @@
               <!-- Drawn board covering the pieces behind it, masked by circles -->
               <rect width="700" height="600" fill="url(#board-glow-grad)" mask="url(#grid-mask)" class="board-plate" />
               
-              <!-- Gradient fill for the board plate -->
               <linearGradient id="board-glow-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#1b193a" />
-                <stop offset="100%" stop-color="#0f0e22" />
+                <stop offset="0%" stop-color="var(--board-grad-start)" />
+                <stop offset="100%" stop-color="var(--board-grad-end)" />
               </linearGradient>
             </svg>
+
+            <!-- SVG Overlay layer for the winning connection path (Z-index 2.5) -->
+            <svg id="win-line-svg" viewBox="0 0 700 600" preserveAspectRatio="none" class="win-line-svg">
+              <!-- Animated drawing path will be appended here upon victory -->
+            </svg>
             
-            <!-- Glow grid effect layer to sit above the mask (drawn using grid columns) -->
+            <!-- Interactive Hover column glow overlay (Z-index 2) -->
             <div class="grid-glow-columns">
               <div class="glow-col" data-col="0"></div>
               <div class="glow-col" data-col="1"></div>
@@ -186,14 +267,17 @@
       <div class="overlay-content card">
         <h2 id="winner-title">VICTORY!</h2>
         <p id="winner-subtitle">You beat the elite AI opponent.</p>
-        <button id="play-again-btn" class="btn btn-primary btn-large">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 11-.57-8.38l5.67-5.67"/></svg>
-          PLAY AGAIN
-        </button>
-        <button id="watch-replay-btn" class="btn btn-secondary btn-large">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          WATCH REPLAY
-        </button>
+        
+        <div class="overlay-buttons">
+          <button id="play-again-btn" class="btn btn-primary btn-large">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 11-.57-8.38l5.67-5.67"/></svg>
+            PLAY AGAIN
+          </button>
+          <button id="watch-replay-btn" class="btn btn-secondary btn-large">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            WATCH REPLAY
+          </button>
+        </div>
       </div>
     </div>
   </div>

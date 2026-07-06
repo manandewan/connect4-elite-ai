@@ -13,6 +13,7 @@ export class Connect4Game {
     this.gameOver = false;
     this.winner = null;     // 1, 2, or 'draw'
     this.winningCells = null; // Array of [col, row] for highlighting
+    this.winningDirection = null; // 'horizontal', 'vertical', 'diagonal-up', 'diagonal-down'
   }
 
   // Get cell value at (col, row)
@@ -50,7 +51,8 @@ export class Connect4Game {
     if (winCells) {
       this.gameOver = true;
       this.winner = player;
-      this.winningCells = winCells;
+      this.winningCells = winCells.cells;
+      this.winningDirection = winCells.direction;
     } else if (this.getValidMoves().length === 0) {
       this.gameOver = true;
       this.winner = 'draw';
@@ -82,6 +84,7 @@ export class Connect4Game {
       this.gameOver = false;
       this.winner = null;
       this.winningCells = null;
+      this.winningDirection = null;
       this.currentPlayer = this.getHistoryPlayerForNextTurn();
       return { col, row };
     }
@@ -131,13 +134,13 @@ export class Connect4Game {
   // Checks for win centered around the last placed cell (col, row)
   getWinningSequence(col, row, player) {
     const directions = [
-      { dx: 1, dy: 0 },  // Horizontal
-      { dx: 0, dy: 1 },  // Vertical
-      { dx: 1, dy: 1 },  // Diagonal \ (top-left to bottom-right)
-      { dx: 1, dy: -1 }  // Diagonal / (bottom-left to top-right)
+      { dx: 1, dy: 0, name: 'horizontal' },  // Horizontal
+      { dx: 0, dy: 1, name: 'vertical' },    // Vertical
+      { dx: 1, dy: 1, name: 'diagonal-down' }, // Diagonal \ (top-left to bottom-right)
+      { dx: 1, dy: -1, name: 'diagonal-up' }  // Diagonal / (bottom-left to top-right)
     ];
 
-    for (const { dx, dy } of directions) {
+    for (const { dx, dy, name } of directions) {
       const cells = [[col, row]];
 
       // Count positive direction
@@ -163,8 +166,10 @@ export class Connect4Game {
       }
 
       if (cells.length >= 4) {
-        // Return first 4 cells in the winning sequence
-        return cells.slice(0, 4);
+        return {
+          cells: cells.slice(0, 4),
+          direction: name
+        };
       }
     }
     return null;

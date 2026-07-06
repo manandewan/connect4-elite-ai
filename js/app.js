@@ -9,18 +9,22 @@ class Connect4App {
     this.game = new Connect4Game();
     this.ui = new Connect4UI();
     
-    // Game settings (read from UI initial values)
-    this.difficulty = this.ui.difficultySelect.value;
-    this.starter = this.ui.starterSelect.value;
+    // Read initial selections from lobby UI
+    this.difficulty = this.ui.selectedDifficulty;
+    this.starter = this.ui.selectedStarter;
+    this.theme = this.ui.selectedTheme;
     
-    // Match wins/losses counters
+    // Match wins/losses counters and win streak
     this.scores = {
       player: 0,
       ai: 0,
       draws: 0
     };
+    this.streak = 0;
     
     this.isThinking = false;
+    this.isHinting = false;
+    this.isReplaying = false;
     this.worker = null;
     
     this.initWorker();
@@ -33,15 +37,24 @@ class Connect4App {
       this.worker = new Worker(new URL('./worker.js', import.meta.url));
       
       this.worker.onmessage = (e) => {
-        const { bestMove } = e.data;
-        this.isThinking = false;
-        this.executeAIMove(bestMove);
+        const { bestMove, type } = e.data;
+        
+        if (type === 'hint') {
+          this.isHinting = false;
+          this.ui.setHintDisabled(false);
+          this.ui.showHint(bestMove);
+        } else {
+          this.isThinking = false;
+          this.executeAIMove(bestMove);
+        }
       };
       
       this.worker.onerror = (err) => {
         console.error('AI Web Worker Error:', err);
         this.isThinking = false;
+        this.isHinting = false;
         this.ui.setThinking(false);
+        this.ui.setHintDisabled(false);
       };
     } catch (e) {
       console.warn('Failed to initialize Web Worker. Falling back to main-thread AI execution.', e);
@@ -55,21 +68,25 @@ class Connect4App {
       () => this.resetGame(),
       () => this.undoMove(),
       (config) => this.handleConfigChange(config),
-      () => this.startReplay()
+      () => this.startReplay(),
+      () => this.handleHintRequest(),
+      (col, isHovering) => this.handleColumnHover(col, isHovering)
     );
 
-    // Apply starting configuration
+    // Apply default starting theme & display
+    this.ui.applyTheme(this.theme);
+    this.ui.updateDifficultyDisplay(this.difficulty);
     this.resetGame();
   }
 
   handleConfigChange(config) {
     this.difficulty = config.difficulty;
+    this.starter = config.starter;
+    this.theme = config.theme;
     
-    // If starter player is changed, we reset the game so it applies immediately
-    if (this.starter !== config.starter) {
-      this.starter = config.starter;
-      this.resetGame();
-    }
+    this.ui.applyTheme(this.theme);
+    this.ui.updateDifficultyDisplay(this.difficulty);
+    this.resetGame();
   }
 
   resetGame() {
@@ -89,7 +106,8 @@ class Connect4App {
     
     this.ui.setTurn(this.game.currentPlayer, this.game.currentPlayer === 2);
     this.ui.setUndoDisabled(true);
-    this.ui.updateScores(this.scores.player, this.scores.ai, this.scores.draws);
+    this.ui.setHintDisabled(false);
+    this.ui.updateScores(this.scores.player, this.scores.ai, this.scores.draws, this.streak);
     
     if (this.game.currentPlayer === 2) {
       this.triggerAIMove();
@@ -98,7 +116,7 @@ class Connect4App {
 
   handlePlayerClick(col) {
     // Prevent moves if game over, AI's turn, AI is computing, or replaying
-    if (this.game.gameOver || this.game.currentPlayer !== 1 || this.isThinking || this.isReplaying) {
+    if (this.game.gameOver || this.game.currentPlayer !== 1 || this.isThinking || this.isReplaying || this.isHinting) {
       return;
     }
 
@@ -108,12 +126,62 @@ class Connect4App {
       return;
     }
 
+    // Hide preview ghost piece on click
+    this.ui.hideGhostPiece();
+
     // Place player piece (Player 1)
     this.game.makeMove(col, 1);
     this.ui.addPiece(col, row, 1);
     this.ui.setUndoDisabled(false);
 
     this.checkGameState();
+  }
+
+  handleColumnHover(col, isHovering) {
+    // Hide ghost piece if not hovering or if actions are locked
+    if (!isHovering || this.game.gameOver || this.game.currentPlayer !== 1 || this.isThinking || this.isReplaying || this.isHinting) {
+      this.ui.hideGhostPiece();
+      return;
+    }
+
+    const row = this.game.getLowestEmptyRow(col);
+    this.ui.showGhostPiece(col, row, 1);
+  }
+
+  handleHintRequest() {
+    // Prevent if game over, not player's turn, or AI is computing
+    if (this.game.gameOver || this.game.currentPlayer !== 1 || this.isThinking || this.isReplaying || this.isHinting) {
+      return;
+    }
+
+    this.isHinting = true;
+    this.ui.setHintDisabled(true);
+
+    const depthMap = {
+      easy: 2,
+      medium: 4,
+      elite: 8
+    };
+    const depth = depthMap[this.difficulty] || 8;
+
+    // Send board state to Web Worker to find the best player move (aiPlayer: 1)
+    if (this.worker) {
+      this.worker.postMessage({
+        board: [...this.game.board],
+        depth: depth,
+        aiPlayer: 1,
+        type: 'hint'
+      });
+    } else {
+      // Fallback
+      setTimeout(async () => {
+        const { getBestMove } = await import('./ai.js');
+        const bestMove = getBestMove([...this.game.board], depth, 1);
+        this.isHinting = false;
+        this.ui.setHintDisabled(false);
+        this.ui.showHint(bestMove);
+      }, 50);
+    }
   }
 
   triggerAIMove() {
@@ -134,10 +202,11 @@ class Connect4App {
       this.worker.postMessage({
         board: [...this.game.board],
         depth: depth,
-        aiPlayer: 2
+        aiPlayer: 2,
+        type: 'aiMove'
       });
     } else {
-      // Fallback in case Web Workers are not supported (e.g. running locally in very restrictive sandboxes)
+      // Fallback in case Web Workers are not supported
       setTimeout(async () => {
         const { getBestMove } = await import('./ai.js');
         const bestMove = getBestMove([...this.game.board], depth, 2);
@@ -152,7 +221,6 @@ class Connect4App {
 
     const row = this.game.getLowestEmptyRow(col);
     if (row === -1) {
-      // Fallback logic if the worker somehow suggested a full column
       const validMoves = this.game.getValidMoves();
       if (validMoves.length > 0) {
         this.executeAIMove(validMoves[0]);
@@ -190,6 +258,7 @@ class Connect4App {
     // Update UI states
     this.ui.setTurn(this.game.currentPlayer, this.game.currentPlayer === 2);
     this.ui.setUndoDisabled(this.game.history.length === 0);
+    this.ui.setHintDisabled(false);
 
     // If game state reverted back to AI turn (e.g. if player undid initial turn of AI-starts)
     if (this.game.currentPlayer === 2 && !this.game.gameOver) {
@@ -208,24 +277,40 @@ class Connect4App {
       this.lastGameStarter = this.game.startingPlayer;
       this.lastGameWinner = this.game.winner;
       this.lastGameWinningCells = this.game.winningCells;
+      this.lastGameWinningDirection = this.game.winningDirection;
 
       const winner = this.game.winner;
+      const history = this.game.history;
+      
+      // Determine the coordinates of the very last move made to highlight it uniquely
+      const lastCol = history[history.length - 1];
+      let lastRow = -1;
+      for (let r = 0; r < 6; r++) {
+        if (this.game.get(lastCol, r) !== 0) {
+          lastRow = r;
+          break;
+        }
+      }
+
       if (winner === 1) {
         this.scores.player++;
-        this.ui.highlightWinningSequence(this.game.winningCells, 1);
+        this.streak++;
+        this.ui.highlightWinningSequence(this.game.winningCells, 1, lastCol, lastRow);
       } else if (winner === 2) {
         this.scores.ai++;
-        this.ui.highlightWinningSequence(this.game.winningCells, 2);
+        this.streak = 0; // Reset win streak
+        this.ui.highlightWinningSequence(this.game.winningCells, 2, lastCol, lastRow);
       } else {
         this.scores.draws++;
       }
 
-      this.ui.updateScores(this.scores.player, this.scores.ai, this.scores.draws);
+      this.ui.updateScores(this.scores.player, this.scores.ai, this.scores.draws, this.streak);
+      this.ui.setHintDisabled(true);
       
-      // Delay game-over overlay presentation slightly so win path highlights pulse first
+      // Delay game-over overlay presentation to let the highlights and confetti breathe
       setTimeout(() => {
-        this.ui.showGameOver(winner);
-      }, 1000);
+        this.ui.showGameOver(winner, this.game.winningDirection);
+      }, 1500);
     } else {
       // Move turn forward
       this.ui.setTurn(this.game.currentPlayer, this.game.currentPlayer === 2);
@@ -244,6 +329,7 @@ class Connect4App {
     this.isReplaying = true;
     this.ui.hideGameOver();
     this.ui.setUndoDisabled(true);
+    this.ui.setHintDisabled(true);
 
     // Reset game state board array for playback
     this.game.reset();
@@ -261,17 +347,26 @@ class Connect4App {
 
         // Highlight winner if not a draw
         if (this.lastGameWinner && this.lastGameWinner !== 'draw') {
-          this.ui.highlightWinningSequence(this.lastGameWinningCells, this.lastGameWinner);
+          const lastCol = this.lastGameHistory[this.lastGameHistory.length - 1];
+          let lastRow = -1;
+          for (let r = 0; r < 6; r++) {
+            if (this.game.get(lastCol, r) !== 0) {
+              lastRow = r;
+              break;
+            }
+          }
+          this.ui.highlightWinningSequence(this.lastGameWinningCells, this.lastGameWinner, lastCol, lastRow);
         }
 
         // Re-set standard indicators
         this.ui.setTurn(this.game.currentPlayer, this.game.currentPlayer === 2);
         this.ui.setUndoDisabled(this.game.history.length === 0);
+        this.ui.setHintDisabled(false);
 
         // Display results overlay after brief delay
         setTimeout(() => {
-          this.ui.showGameOver(this.lastGameWinner);
-        }, 1000);
+          this.ui.showGameOver(this.lastGameWinner, this.lastGameWinningDirection);
+        }, 1500);
         return;
       }
 

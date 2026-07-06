@@ -2,9 +2,9 @@
 // Performs high-performance minimax calculations off the main thread.
 
 self.onmessage = function(e) {
-  const { board, depth, aiPlayer } = e.data;
+  const { board, depth, aiPlayer, type } = e.data;
   const bestMove = getBestMove(board, depth, aiPlayer);
-  self.postMessage({ bestMove });
+  self.postMessage({ bestMove, type });
 };
 
 const COLS = 7;
