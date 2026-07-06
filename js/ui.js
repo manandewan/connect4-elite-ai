@@ -8,11 +8,19 @@ class AudioSynth {
   }
 
   init() {
-    if (!this.ctx) {
-      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+    try {
+      if (!this.ctx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          this.ctx = new AudioContextClass();
+        }
+      }
+      if (this.ctx && this.ctx.state === 'suspended') {
+        this.ctx.resume();
+      }
+    } catch (err) {
+      console.warn('Web Audio API not supported or blocked in this browser:', err);
+      this.ctx = null;
     }
   }
 
