@@ -233,6 +233,8 @@ export class Connect4UI {
     this.tutCloseBtn = document.getElementById('tut-close-btn');
     this.tutStepTitle = document.getElementById('tut-step-title');
     this.tutStepText = document.getElementById('tut-step-text');
+    this.lobbyTutorialBtn = document.getElementById('lobby-tutorial-btn');
+    this.sidebarTutorialBtn = document.getElementById('sidebar-tutorial-btn');
   }
 
   initConfetti() {
@@ -412,6 +414,26 @@ export class Connect4UI {
     document.getElementById('header-logo').addEventListener('click', () => {
       this.synth.playClick();
       this.showHomeScreen();
+    });
+
+    // Launch tutorial on demand from lobby or sidebar
+    this.lobbyTutorialBtn.addEventListener('click', () => {
+      this.synth.init();
+      this.synth.playClick();
+      this.hideHomeScreen();
+      
+      onConfigChange({
+        difficulty: this.selectedDifficulty,
+        starter: this.selectedStarter,
+        theme: this.selectedTheme
+      });
+      onTutorialAction('start');
+    });
+
+    this.sidebarTutorialBtn.addEventListener('click', () => {
+      this.synth.init();
+      this.synth.playClick();
+      onTutorialAction('start');
     });
   }
 
