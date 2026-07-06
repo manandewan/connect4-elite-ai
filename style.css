@@ -979,6 +979,10 @@ body {
   pointer-events: none;
 }
 
+.hidden {
+  display: none !important;
+}
+
 .overlay-content {
   text-align: center;
   max-width: 420px;

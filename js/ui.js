@@ -689,15 +689,15 @@ export class Connect4UI {
     if (winner === 1) {
       this.overlayContent.classList.add('player-win');
       this.winnerTitle.textContent = 'VICTORY!';
-      this.winnerSubtitle.textContent = `Outstanding moves! You defeated the elite AI${lineType}.`;
+      this.winnerSubtitle.textContent = `Outstanding moves! You defeated the elite AI${lineType}. Click "Watch Replay" below to review your moves.`;
     } else if (winner === 2) {
       this.overlayContent.classList.add('ai-win');
       this.winnerTitle.textContent = 'DEFEAT!';
-      this.winnerSubtitle.textContent = `The elite minimax AI outplayed you${lineType}. Try again to adapt your strategy.`;
+      this.winnerSubtitle.textContent = `The elite minimax AI outplayed you${lineType}. Click "Watch Replay" below to analyze the game and see where it was lost.`;
     } else {
       this.overlayContent.classList.add('draw-win');
       this.winnerTitle.textContent = "IT'S A DRAW";
-      this.winnerSubtitle.textContent = 'Both sides played flawlessly. An unbreakable grid!';
+      this.winnerSubtitle.textContent = 'Both sides played flawlessly. An unbreakable grid! Click "Watch Replay" below to review the match.';
     }
 
     this.gameOverScreen.classList.remove('hidden');
@@ -726,26 +726,26 @@ export class Connect4UI {
     const steps = [
       {
         target: this.boardOuter,
-        title: '1 OF 4: GHOST PREVIEWS',
-        text: 'Hover your cursor over the board columns to see a transparent preview indicating exactly where your piece will land.',
+        title: 'GHOST PREVIEW',
+        text: 'Hover over columns to see exactly where your piece will land before dropping it.',
         pos: 'right'
       },
       {
         target: this.floatingThemeSelector,
-        title: '2 OF 4: PERSISTENT THEMES',
-        text: 'Swap visual designs instantly mid-game using these floating dots: Classic, Cyberpunk, or Sunset Gold.',
+        title: 'THEME SELECTOR',
+        text: 'Swap visual themes instantly mid-game using these bottom-left circles.',
         pos: 'top-left'
       },
       {
         target: this.undoBtn,
-        title: '3 OF 4: UNDO MOVE',
-        text: 'Tap UNDO MOVE at any time to correct misplays and test alternative strategies.',
+        title: 'UNDO MOVE',
+        text: 'Undo any misplays at any time to revise your strategy.',
         pos: 'right'
       },
       {
-        target: this.defaultTurnIndicator.parentElement, // Selects the status bar container
-        title: '4 OF 4: SOUNDS & REPLAYS',
-        text: 'Toggle retro sound effects, or review completed games step-by-step using interactive replays.',
+        target: this.defaultTurnIndicator.parentElement,
+        title: 'STATUS BAR & REPLAYS',
+        text: 'Toggle sound effects, or watch step-by-step interactive game replays here.',
         pos: 'bottom'
       }
     ];
@@ -753,7 +753,7 @@ export class Connect4UI {
     const step = steps[stepIndex];
     if (!step) return;
 
-    this.tutStepTitle.textContent = `STEP ${step.title}`;
+    this.tutStepTitle.textContent = step.title;
     this.tutStepText.textContent = step.text;
 
     // Spotlight highlight target

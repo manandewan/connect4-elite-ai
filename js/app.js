@@ -34,6 +34,20 @@ class Connect4App {
     
     this.initWorker();
     this.initGame();
+    this.initKeyboardControls();
+  }
+
+  initKeyboardControls() {
+    window.addEventListener('keydown', (e) => {
+      if (!this.isReplaying) return;
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        this.handleReplayAction('back');
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        this.handleReplayAction('forward');
+      }
+    });
   }
 
   // Set up the AI background worker thread
