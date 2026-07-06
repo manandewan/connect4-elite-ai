@@ -81,13 +81,19 @@ class Connect4App {
   }
 
   handleConfigChange(config) {
+    const difficultyChanged = (this.difficulty !== config.difficulty);
+    const starterChanged = (this.starter !== config.starter);
+
     this.difficulty = config.difficulty;
     this.starter = config.starter;
     this.theme = config.theme;
     
     this.ui.applyTheme(this.theme);
     this.ui.updateDifficultyDisplay(this.difficulty);
-    this.resetGame();
+    
+    if (difficultyChanged || starterChanged) {
+      this.resetGame();
+    }
   }
 
   resetGame() {
