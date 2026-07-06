@@ -95,7 +95,79 @@ body {
   width: 100vw;
   height: 100vh;
   pointer-events: none;
-  z-index: 8; /* Sits below game-over overlay, above board */
+  z-index: 8;
+}
+
+/* Persistent Floating Theme Selector (Bottom-Left) */
+.floating-theme-selector {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 9;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+}
+
+.floating-theme-selector.hidden {
+  opacity: 0;
+  transform: translateY(15px);
+  pointer-events: none;
+}
+
+.floating-theme-selector .theme-label {
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  font-weight: 900;
+  color: var(--text-secondary);
+  letter-spacing: 1.5px;
+}
+
+.theme-dots {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.theme-dot-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.theme-dot-btn[data-value="neon"] {
+  background: linear-gradient(135deg, #ff3366, #00f0ff);
+}
+
+.theme-dot-btn[data-value="classic"] {
+  background: linear-gradient(135deg, #d90429, #ffb703);
+}
+
+.theme-dot-btn[data-value="mint"] {
+  background: linear-gradient(135deg, #52b788, #f77f00);
+}
+
+.theme-dot-btn:hover {
+  transform: scale(1.15);
+}
+
+.theme-dot-btn.active {
+  transform: scale(1.15);
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
 /* App Layout */
@@ -233,7 +305,7 @@ body {
 /* Score Board */
 .score-board {
   display: grid;
-  grid-template-columns: 1fr 1.1fr; /* Draws get slightly smaller column */
+  grid-template-columns: 1fr 1.1fr;
   grid-template-rows: auto auto;
   gap: 10px;
 }
@@ -249,7 +321,7 @@ body {
 }
 
 .draw-score {
-  grid-column: 1 / 3; /* Spans across bottom */
+  grid-column: 1 / 3;
   border-left: 3px solid var(--text-muted);
   flex-direction: row !important;
   justify-content: space-between;
@@ -366,6 +438,10 @@ body {
   gap: 12px;
 }
 
+.turn-indicator.hidden {
+  display: none !important;
+}
+
 .turn-indicator .dot {
   width: 16px;
   height: 16px;
@@ -381,17 +457,6 @@ body {
 .cyan-turn {
   background-color: var(--color-ai);
   box-shadow: 0 0 12px var(--color-ai);
-}
-
-.orange-turn {
-  background-color: #ff9f00;
-  box-shadow: 0 0 12px #ff9f00;
-  animation: pulse-orange 1s infinite alternate;
-}
-
-@keyframes pulse-orange {
-  0% { transform: scale(1); opacity: 0.8; }
-  100% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 16px #ff9f00; }
 }
 
 #turn-text {
@@ -431,6 +496,56 @@ body {
 
 .icon-btn.hidden {
   display: none;
+}
+
+/* Chess.com Replay controls style */
+.replay-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.replay-controls.hidden {
+  display: none !important;
+}
+
+.rep-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-border);
+  color: var(--text-primary);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.rep-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: scale(1.08);
+}
+
+.rep-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+  color: var(--text-muted);
+  border-color: var(--panel-border);
+}
+
+#replay-status-text {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  color: #ff9f00;
+  text-shadow: 0 0 10px rgba(255, 159, 0, 0.2);
+  min-width: 110px;
+  text-align: center;
 }
 
 /* Thinking Indicator */
@@ -566,6 +681,14 @@ body {
   transform-origin: center center;
 }
 
+/* SAFE ROW FALLBACKS: Resolves CSS animation top-reset override bugs */
+.piece[data-row="0"] { top: calc(0 * 16.6667% + 8.3333%); }
+.piece[data-row="1"] { top: calc(1 * 16.6667% + 8.3333%); }
+.piece[data-row="2"] { top: calc(2 * 16.6667% + 8.3333%); }
+.piece[data-row="3"] { top: calc(3 * 16.6667% + 8.3333%); }
+.piece[data-row="4"] { top: calc(4 * 16.6667% + 8.3333%); }
+.piece[data-row="5"] { top: calc(5 * 16.6667% + 8.3333%); }
+
 .piece.player {
   background: radial-gradient(circle at 35% 35%, #ffffff 0%, var(--color-player) 50%, rgba(0,0,0,0.6) 100%);
   box-shadow: 0 0 15px var(--secondary-glow), inset 0 -4px 8px rgba(0,0,0,0.4);
@@ -602,8 +725,8 @@ body {
 
 /* Final Winning Move Outline */
 .piece.winning-move {
-  border: 3.5px solid #fff;
-  box-shadow: 0 0 30px #fff, 0 0 20px currentColor, inset 0 0 8px rgba(255,255,255,0.6);
+  border: 3.5px solid #ffffff !important;
+  box-shadow: 0 0 30px #ffffff, 0 0 20px currentColor, inset 0 0 8px rgba(255,255,255,0.6) !important;
   z-index: 4;
 }
 
@@ -794,7 +917,6 @@ body {
   box-shadow: 0 0 12px var(--primary-glow);
 }
 
-/* If active under player click choice */
 .starter-selector .select-option.active[data-value="player"] {
   border-color: var(--color-player);
   box-shadow: 0 0 12px var(--secondary-glow);
@@ -830,15 +952,26 @@ body {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(4, 3, 10, 0.82);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   z-index: 10;
   display: flex;
   justify-content: center;
   align-items: center;
   opacity: 1;
   transition: opacity 0.3s ease;
+}
+
+/* Keep home screen with standard overlay blur and dark bg */
+#home-screen {
+  background-color: rgba(4, 3, 10, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Clearer game-over overlay backdrop: disable blur, keep transparent, so winning cells are fully visible */
+#game-over-screen {
+  background-color: rgba(4, 3, 10, 0.35);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .overlay.hidden {

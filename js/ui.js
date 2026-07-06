@@ -130,10 +130,9 @@ class ConfettiParticle {
     this.y += this.vy;
     this.rotation += this.rotationSpeed;
 
-    // Bounce off bottom of the screen
     if (this.y + this.size / 2 >= height && this.vy > 0) {
       if (this.bounceCount < 2) {
-        this.vy = -this.vy * 0.4; // Lose energy
+        this.vy = -this.vy * 0.4;
         this.y = height - this.size / 2;
         this.bounceCount++;
       }
@@ -159,7 +158,7 @@ export class Connect4UI {
     // Ghost preview piece pointer
     this.ghostPiece = null;
     
-    // Active selections inside lobby (storing data values)
+    // Active configuration selectors inside lobby
     this.selectedDifficulty = 'elite';
     this.selectedStarter = 'player';
     this.selectedTheme = 'neon';
@@ -177,6 +176,19 @@ export class Connect4UI {
     this.soundToggleBtn = document.getElementById('sound-toggle-btn');
     this.soundOnIcon = document.getElementById('sound-on-icon');
     this.soundOffIcon = document.getElementById('sound-off-icon');
+    
+    // Theme Dot Panel Elements
+    this.floatingThemeSelector = document.getElementById('floating-theme-selector');
+    this.themeDotBtns = document.querySelectorAll('.theme-dot-btn');
+    
+    // Interactive Replay Controls
+    this.defaultTurnIndicator = document.getElementById('default-turn-indicator');
+    this.replayControls = document.getElementById('replay-controls');
+    this.repStartBtn = document.getElementById('rep-start-btn');
+    this.repBackBtn = document.getElementById('rep-back-btn');
+    this.repForwardBtn = document.getElementById('rep-forward-btn');
+    this.repEndBtn = document.getElementById('rep-end-btn');
+    this.replayStatusText = document.getElementById('replay-status-text');
     
     this.homeScreen = document.getElementById('home-screen');
     this.startMatchBtn = document.getElementById('start-match-btn');
@@ -217,8 +229,7 @@ export class Connect4UI {
     });
   }
 
-  setupEventListeners(onColumnClick, onReset, onUndo, onConfigChange, onReplay, onHintRequest, onColumnHover) {
-    // 1. Column drops
+  setupEventListeners(onColumnClick, onReset, onUndo, onConfigChange, onReplayAction, onHintRequest, onColumnHover) {
     const handleColumnSelect = (colIndex) => {
       this.synth.init();
       onColumnClick(colIndex);
@@ -227,41 +238,21 @@ export class Connect4UI {
     // Columns click & hover listeners
     this.glowCols.forEach(col => {
       const colIndex = parseInt(col.dataset.col);
-      
       col.addEventListener('click', () => handleColumnSelect(colIndex));
-      
-      col.addEventListener('mouseenter', () => {
-        onColumnHover(colIndex, true);
-      });
-      
-      col.addEventListener('mousemove', () => {
-        onColumnHover(colIndex, true);
-      });
-      
-      col.addEventListener('mouseleave', () => {
-        onColumnHover(colIndex, false);
-      });
+      col.addEventListener('mouseenter', () => onColumnHover(colIndex, true));
+      col.addEventListener('mousemove', () => onColumnHover(colIndex, true));
+      col.addEventListener('mouseleave', () => onColumnHover(colIndex, false));
     });
 
     this.headerCols.forEach(col => {
       const colIndex = parseInt(col.dataset.col);
-      
       col.addEventListener('click', () => handleColumnSelect(colIndex));
-      
-      col.addEventListener('mouseenter', () => {
-        onColumnHover(colIndex, true);
-      });
-      
-      col.addEventListener('mousemove', () => {
-        onColumnHover(colIndex, true);
-      });
-      
-      col.addEventListener('mouseleave', () => {
-        onColumnHover(colIndex, false);
-      });
+      col.addEventListener('mouseenter', () => onColumnHover(colIndex, true));
+      col.addEventListener('mousemove', () => onColumnHover(colIndex, true));
+      col.addEventListener('mouseleave', () => onColumnHover(colIndex, false));
     });
 
-    // 2. Control lobby buttons
+    // Control buttons
     this.resetBtn.addEventListener('click', () => {
       this.synth.playClick();
       onReset();
@@ -277,17 +268,7 @@ export class Connect4UI {
       onUndo();
     });
 
-    this.watchReplayBtn.addEventListener('click', () => {
-      this.synth.playClick();
-      onReplay();
-    });
-
-    this.hintBtn.addEventListener('click', () => {
-      this.synth.playClick();
-      onHintRequest();
-    });
-
-    // 3. Audio Mute Toggle
+    // Audio Mute Toggle
     this.soundToggleBtn.addEventListener('click', () => {
       this.synth.init();
       this.synth.isMuted = !this.synth.isMuted;
@@ -302,7 +283,39 @@ export class Connect4UI {
       }
     });
 
-    // 4. Lobby Configuration Options (Card Selectors)
+    // Hint button
+    this.hintBtn.addEventListener('click', () => {
+      this.synth.playClick();
+      onHintRequest();
+    });
+
+    // Chess.com Interactive Replay Button Action triggers
+    this.watchReplayBtn.addEventListener('click', () => {
+      this.synth.playClick();
+      onReplayAction('start'); // Enters Replay mode starting at step 0
+    });
+
+    this.repStartBtn.addEventListener('click', () => {
+      this.synth.playClick();
+      onReplayAction('start');
+    });
+
+    this.repBackBtn.addEventListener('click', () => {
+      this.synth.playClick();
+      onReplayAction('back');
+    });
+
+    this.repForwardBtn.addEventListener('click', () => {
+      this.synth.playClick();
+      onReplayAction('forward');
+    });
+
+    this.repEndBtn.addEventListener('click', () => {
+      this.synth.playClick();
+      onReplayAction('end');
+    });
+
+    // Lobby config card selectors (Only Difficulty & Starter now)
     const setupLobbySelectors = (selectorClass, activeProp, updateCallback) => {
       const options = document.querySelectorAll(`${selectorClass} .select-option`);
       options.forEach(opt => {
@@ -319,11 +332,27 @@ export class Connect4UI {
       });
     };
 
-    // Bind lobby choices
     setupLobbySelectors('.difficulty-selector', 'selectedDifficulty', () => {});
     setupLobbySelectors('.starter-selector', 'selectedStarter', () => {});
-    setupLobbySelectors('.theme-selector', 'selectedTheme', () => {
-      this.applyTheme(this.selectedTheme);
+
+    // Floating Theme Selector click listeners (Bottom-Left)
+    this.themeDotBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.synth.init();
+        this.synth.playClick();
+        
+        this.themeDotBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        this.selectedTheme = btn.dataset.value;
+        this.applyTheme(this.selectedTheme);
+        
+        onConfigChange({
+          difficulty: this.selectedDifficulty,
+          starter: this.selectedStarter,
+          theme: this.selectedTheme
+        });
+      });
     });
 
     // Start match action
@@ -331,9 +360,8 @@ export class Connect4UI {
       this.synth.init();
       this.synth.playClick();
       
-      this.homeScreen.classList.add('hidden');
+      this.hideHomeScreen();
       
-      // Notify orchestrator of config changes
       onConfigChange({
         difficulty: this.selectedDifficulty,
         starter: this.selectedStarter,
@@ -341,7 +369,7 @@ export class Connect4UI {
       });
     });
 
-    // Logo returns to home screen
+    // Return to Lobby from header logo
     document.getElementById('header-logo').addEventListener('click', () => {
       this.synth.playClick();
       this.showHomeScreen();
@@ -350,12 +378,26 @@ export class Connect4UI {
 
   showHomeScreen() {
     this.homeScreen.classList.remove('hidden');
+    this.floatingThemeSelector.classList.add('hidden'); // Hide theme selection in lobby
+  }
+
+  hideHomeScreen() {
+    this.homeScreen.classList.add('hidden');
+    this.floatingThemeSelector.classList.remove('hidden'); // Show theme selection during game
   }
 
   applyTheme(theme) {
     document.body.className = `theme-${theme}`;
     
-    // Update theme display text
+    // Set matching dot active in bottom left
+    this.themeDotBtns.forEach(btn => {
+      if (btn.dataset.value === theme) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
     const themeNames = {
       neon: 'Cyber Neon',
       classic: 'Retro Classic',
@@ -373,7 +415,6 @@ export class Connect4UI {
     this.currentDifficultyDisplay.textContent = difficulties[difficulty] || difficulty;
   }
 
-  // Draw ghost preview piece at exactly calculated landing row
   showGhostPiece(col, row, player) {
     if (row === -1) {
       this.hideGhostPiece();
@@ -387,6 +428,9 @@ export class Connect4UI {
 
     this.ghostPiece.className = `piece ghost ${player === 1 ? 'player' : 'ai'}`;
     this.ghostPiece.style.left = `calc(${col} * 14.2857% + 7.1428%)`;
+    
+    // Set data-row for absolute fallbacks, and also update top directly
+    this.ghostPiece.dataset.row = row;
     this.ghostPiece.style.top = `calc(${row} * 16.6667% + 8.3333%)`;
     this.ghostPiece.style.display = 'block';
   }
@@ -402,8 +446,13 @@ export class Connect4UI {
     piece.className = `piece ${player === 1 ? 'player' : 'ai'} piece-drop-${row}`;
     
     piece.style.left = `calc(${col} * 14.2857% + 7.1428%)`;
+    
+    // Important: Assign data attributes immediately!
     piece.dataset.col = col;
     piece.dataset.row = row;
+    
+    // Set static top position inline to prevent CSS jump override issues
+    piece.style.top = `calc(${row} * 16.6667% + 8.3333%)`;
     
     this.piecesLayer.appendChild(piece);
     this.synth.playDrop();
@@ -439,17 +488,15 @@ export class Connect4UI {
         piece.classList.add('winning');
         piece.style.color = color;
         
-        // Highlight the exact winning move (last placed piece)
+        // Highlight the winning move specifically
         if (col === lastCol && row === lastRow) {
           piece.classList.add('winning-move');
         }
       }
     });
 
-    // Draw the connection line over the centers
     this.drawWinLine(cells, winner);
 
-    // Play sounds & victory confetti
     setTimeout(() => {
       if (winner === 1) {
         this.synth.playWin();
@@ -460,16 +507,23 @@ export class Connect4UI {
     }, 400);
   }
 
-  // Draw connections path using SVG
+  clearWinningHighlights() {
+    // Remove winning class animations and remove SVG win line
+    const pieces = this.piecesLayer.querySelectorAll('.piece');
+    pieces.forEach(p => {
+      p.classList.remove('winning', 'winning-move');
+    });
+    this.winLineSvg.innerHTML = '';
+    this.stopConfetti();
+  }
+
   drawWinLine(cells, winner) {
     this.winLineSvg.innerHTML = '';
 
-    // Sort cells so we connect first cell to the last cell
     const sorted = [...cells].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
     const start = sorted[0];
     const end = sorted[3];
 
-    // Compute coordinate points (box cx = col * 100 + 50, cy = row * 100 + 50)
     const x1 = start[0] * 100 + 50;
     const y1 = start[1] * 100 + 50;
     const x2 = end[0] * 100 + 50;
@@ -500,10 +554,8 @@ export class Connect4UI {
       '#ff3366', '#00f0ff', '#ffb703', '#52b788', '#ffffff', '#e0aaff'
     ];
 
-    // Populate particles
     const particleCount = 120;
     for (let i = 0; i < particleCount; i++) {
-      // Spawn centered around bottom/mid of screen shooting upwards
       const x = window.innerWidth / 2 + (Math.random() * 120 - 60);
       const y = window.innerHeight * 0.7;
       this.particles.push(new ConfettiParticle(x, y, colors));
@@ -528,7 +580,6 @@ export class Connect4UI {
       p.update(this.confettiCanvas.width, this.confettiCanvas.height);
       p.draw(this.confettiCtx);
       
-      // Keep running if particles are still on screen and moving
       if (p.y < this.confettiCanvas.height + p.size && p.x > -p.size && p.x < this.confettiCanvas.width + p.size) {
         activeParticles++;
       }
@@ -541,10 +592,8 @@ export class Connect4UI {
     }
   }
 
-  // Flash suggested hint column
   showHint(col) {
     const boardWidth = this.boardOuter.clientWidth;
-    const colWidth = boardWidth / 7;
     
     const glowDiv = document.createElement('div');
     glowDiv.className = 'hint-highlight';
@@ -552,7 +601,6 @@ export class Connect4UI {
     
     this.boardOuter.appendChild(glowDiv);
     
-    // Auto-remove after animation completes (1.8s)
     setTimeout(() => {
       glowDiv.remove();
     }, 1800);
@@ -597,27 +645,41 @@ export class Connect4UI {
     }
   }
 
-  setReplayMode(moveIndex, totalMoves) {
-    const parentContainer = this.boardOuter.parentElement;
-    parentContainer.classList.remove('red-active', 'cyan-active');
+  // Show/Hide Chess.com Replay Panel
+  setReplayMode(isActive, stepIndex, totalMoves) {
+    if (isActive) {
+      this.defaultTurnIndicator.classList.add('hidden');
+      this.replayControls.classList.remove('hidden');
+      
+      // Update step index text
+      if (stepIndex === 0) {
+        this.replayStatusText.textContent = `START (0/${totalMoves})`;
+      } else {
+        this.replayStatusText.textContent = `MOVE ${stepIndex}/${totalMoves}`;
+      }
 
-    this.turnDot.className = 'dot orange-turn';
-    if (moveIndex !== undefined) {
-      this.turnText.textContent = `REPLAYING MOVE ${moveIndex}/${totalMoves}`;
+      // Configure button enabled/disabled states based on step index
+      this.repStartBtn.disabled = (stepIndex === 0);
+      this.repBackBtn.disabled = (stepIndex === 0);
+      this.repForwardBtn.disabled = (stepIndex === totalMoves);
+      this.repEndBtn.disabled = (stepIndex === totalMoves);
+      
+      this.setThinking(false);
+      this.updateInteractiveHoverPlayer(0); // Disable board highlights during replay
     } else {
-      this.turnText.textContent = `REPLAY ACTIVE`;
+      this.defaultTurnIndicator.classList.remove('hidden');
+      this.replayControls.classList.add('hidden');
     }
-    this.setThinking(false);
   }
 
   updateInteractiveHoverPlayer(player) {
     const parentContainer = this.boardOuter.parentElement;
+    parentContainer.classList.remove('red-active', 'cyan-active');
+    
     if (player === 1) {
       parentContainer.classList.add('red-active');
-      parentContainer.classList.remove('cyan-active');
-    } else {
+    } else if (player === 2) {
       parentContainer.classList.add('cyan-active');
-      parentContainer.classList.remove('red-active');
     }
   }
 

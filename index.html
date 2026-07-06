@@ -10,9 +10,19 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
 </head>
-<body class="theme-neon"> <!-- Will change dynamically based on selected theme -->
-  <!-- Canvas Confetti Layer (spread across the window) -->
+<body class="theme-neon">
+  <!-- Canvas Confetti Layer -->
   <canvas id="confetti-canvas"></canvas>
+
+  <!-- Persistent Floating Theme Selector (Visible during gameplay in bottom-left corner) -->
+  <div id="floating-theme-selector" class="floating-theme-selector hidden">
+    <span class="theme-label">THEME</span>
+    <div class="theme-dots">
+      <button class="theme-dot-btn active" data-value="neon" title="Cyber Neon"></button>
+      <button class="theme-dot-btn" data-value="classic" title="Retro Classic"></button>
+      <button class="theme-dot-btn" data-value="mint" title="Mint Solar"></button>
+    </div>
+  </div>
 
   <!-- Interactive Home Page Landing Overlay -->
   <div id="home-screen" class="overlay">
@@ -53,25 +63,6 @@
             <div class="select-option" data-value="ai">
               <span class="opt-title">ELITE AI</span>
               <span class="opt-desc">AI takes initiative</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. Theme Selector -->
-        <div class="home-section">
-          <h3>THEME AESTHETIC</h3>
-          <div class="card-selector theme-selector">
-            <div class="select-option active" data-value="neon">
-              <span class="opt-title">CYBER NEON</span>
-              <span class="opt-desc">Pink/Cyan on Violet</span>
-            </div>
-            <div class="select-option" data-value="classic">
-              <span class="opt-title">RETRO CLASSIC</span>
-              <span class="opt-desc">Red/Yellow on Navy</span>
-            </div>
-            <div class="select-option" data-value="mint">
-              <span class="opt-title">MINT SOLAR</span>
-              <span class="opt-desc">Emerald/Amber on Grey</span>
             </div>
           </div>
         </div>
@@ -141,10 +132,29 @@
       <!-- Center: Play Area -->
       <section class="play-panel">
         <div class="status-bar card">
-          <div class="turn-indicator">
+          <!-- Standard Turn Indicators -->
+          <div id="default-turn-indicator" class="turn-indicator">
             <div id="turn-dot" class="dot red-turn"></div>
             <span id="turn-text">YOUR TURN</span>
           </div>
+
+          <!-- Chess.com Inspired Replay Controls (Hidden during normal gameplay) -->
+          <div id="replay-controls" class="replay-controls hidden">
+            <button id="rep-start-btn" class="rep-btn" title="Go to Start">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
+            </button>
+            <button id="rep-back-btn" class="rep-btn" title="Step Back">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <span id="replay-status-text">Move 0 / 0</span>
+            <button id="rep-forward-btn" class="rep-btn" title="Step Forward">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button id="rep-end-btn" class="rep-btn" title="Go to End">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+            </button>
+          </div>
+
           <div class="right-status-group">
             <div id="ai-thinking" class="thinking-indicator hidden">
               <span class="pulse-dot"></span>

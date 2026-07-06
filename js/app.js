@@ -25,6 +25,7 @@ class Connect4App {
     this.isThinking = false;
     this.isHinting = false;
     this.isReplaying = false;
+    this.replayStep = 0;
     this.worker = null;
     
     this.initWorker();
@@ -68,7 +69,7 @@ class Connect4App {
       () => this.resetGame(),
       () => this.undoMove(),
       (config) => this.handleConfigChange(config),
-      () => this.startReplay(),
+      (action) => this.handleReplayAction(action),
       () => this.handleHintRequest(),
       (col, isHovering) => this.handleColumnHover(col, isHovering)
     );
@@ -93,8 +94,8 @@ class Connect4App {
     if (this.isThinking) return; // Do not interrupt running AI calculations
 
     if (this.isReplaying) {
-      clearInterval(this.replayInterval);
       this.isReplaying = false;
+      this.ui.setReplayMode(false); // Restores normal turn UI indicators
     }
 
     this.game.reset();
@@ -122,7 +123,6 @@ class Connect4App {
 
     const row = this.game.getLowestEmptyRow(col);
     if (row === -1) {
-      // Column is full, ignore click
       return;
     }
 
@@ -149,7 +149,6 @@ class Connect4App {
   }
 
   handleHintRequest() {
-    // Prevent if game over, not player's turn, or AI is computing
     if (this.game.gameOver || this.game.currentPlayer !== 1 || this.isThinking || this.isReplaying || this.isHinting) {
       return;
     }
@@ -206,7 +205,7 @@ class Connect4App {
         type: 'aiMove'
       });
     } else {
-      // Fallback in case Web Workers are not supported
+      // Fallback
       setTimeout(async () => {
         const { getBestMove } = await import('./ai.js');
         const bestMove = getBestMove([...this.game.board], depth, 2);
@@ -240,14 +239,11 @@ class Connect4App {
 
     this.ui.hideGameOver();
 
-    // 1. Undo the last move (could be AI's move or Player's move if game was over)
     const move1 = this.game.undoMove();
     if (move1) {
       this.ui.removePiece(move1.col, move1.row);
     }
 
-    // 2. Since this is Player vs AI, if it's now the AI's turn, we undo another move 
-    // to return the game state back to the Player's turn.
     if (this.game.currentPlayer === 2 && this.game.history.length > 0) {
       const move2 = this.game.undoMove();
       if (move2) {
@@ -255,12 +251,10 @@ class Connect4App {
       }
     }
 
-    // Update UI states
     this.ui.setTurn(this.game.currentPlayer, this.game.currentPlayer === 2);
     this.ui.setUndoDisabled(this.game.history.length === 0);
     this.ui.setHintDisabled(false);
 
-    // If game state reverted back to AI turn (e.g. if player undid initial turn of AI-starts)
     if (this.game.currentPlayer === 2 && !this.game.gameOver) {
       this.triggerAIMove();
     }
@@ -282,7 +276,6 @@ class Connect4App {
       const winner = this.game.winner;
       const history = this.game.history;
       
-      // Determine the coordinates of the very last move made to highlight it uniquely
       const lastCol = history[history.length - 1];
       let lastRow = -1;
       for (let r = 0; r < 6; r++) {
@@ -298,7 +291,7 @@ class Connect4App {
         this.ui.highlightWinningSequence(this.game.winningCells, 1, lastCol, lastRow);
       } else if (winner === 2) {
         this.scores.ai++;
-        this.streak = 0; // Reset win streak
+        this.streak = 0;
         this.ui.highlightWinningSequence(this.game.winningCells, 2, lastCol, lastRow);
       } else {
         this.scores.draws++;
@@ -312,7 +305,6 @@ class Connect4App {
         this.ui.showGameOver(winner, this.game.winningDirection);
       }, 1500);
     } else {
-      // Move turn forward
       this.ui.setTurn(this.game.currentPlayer, this.game.currentPlayer === 2);
       
       if (this.game.currentPlayer === 2) {
@@ -321,70 +313,114 @@ class Connect4App {
     }
   }
 
-  startReplay() {
-    if (this.isReplaying || !this.lastGameHistory || this.lastGameHistory.length === 0) {
-      return;
+  // Chess.com Inspired Replay System logic
+  handleReplayAction(action) {
+    if (!this.lastGameHistory || this.lastGameHistory.length === 0) return;
+
+    // Toggle replay mode active state
+    if (!this.isReplaying) {
+      this.isReplaying = true;
+      this.replayStep = 0;
+      this.ui.hideGameOver();
+      this.ui.setUndoDisabled(true);
+      this.ui.setHintDisabled(true);
+      this.game.reset();
+      this.game.setStartingPlayer(this.lastGameStarter);
+      this.ui.clearBoard();
+      this.ui.setReplayMode(true, this.replayStep, this.lastGameHistory.length);
     }
 
-    this.isReplaying = true;
-    this.ui.hideGameOver();
-    this.ui.setUndoDisabled(true);
-    this.ui.setHintDisabled(true);
+    switch (action) {
+      case 'start':
+        // Reset everything back to move 0
+        this.game.reset();
+        this.game.setStartingPlayer(this.lastGameStarter);
+        this.ui.clearBoard();
+        this.ui.clearWinningHighlights();
+        this.replayStep = 0;
+        this.ui.setReplayMode(true, this.replayStep, this.lastGameHistory.length);
+        break;
 
-    // Reset game state board array for playback
-    this.game.reset();
-    this.game.setStartingPlayer(this.lastGameStarter);
-    this.ui.clearBoard();
-
-    let step = 0;
-    this.ui.setReplayMode(step, this.lastGameHistory.length);
-
-    const playNextStep = () => {
-      if (step >= this.lastGameHistory.length) {
-        // Replay completed!
-        clearInterval(this.replayInterval);
-        this.isReplaying = false;
-
-        // Highlight winner if not a draw
-        if (this.lastGameWinner && this.lastGameWinner !== 'draw') {
-          const lastCol = this.lastGameHistory[this.lastGameHistory.length - 1];
-          let lastRow = -1;
-          for (let r = 0; r < 6; r++) {
-            if (this.game.get(lastCol, r) !== 0) {
-              lastRow = r;
-              break;
-            }
+      case 'back':
+        // Go back 1 move
+        if (this.replayStep > 0) {
+          this.ui.clearWinningHighlights();
+          this.ui.hideGameOver();
+          
+          this.replayStep--;
+          const undone = this.game.undoMove();
+          if (undone) {
+            this.ui.removePiece(undone.col, undone.row);
           }
-          this.ui.highlightWinningSequence(this.lastGameWinningCells, this.lastGameWinner, lastCol, lastRow);
+          this.ui.setReplayMode(true, this.replayStep, this.lastGameHistory.length);
+        }
+        break;
+
+      case 'forward':
+        // Go forward 1 move
+        if (this.replayStep < this.lastGameHistory.length) {
+          this.ui.clearWinningHighlights();
+          this.ui.hideGameOver();
+
+          const col = this.lastGameHistory[this.replayStep];
+          const currentPlayer = this.game.currentPlayer;
+          const row = this.game.makeMove(col, currentPlayer);
+
+          if (row !== -1) {
+            this.ui.addPiece(col, row, currentPlayer);
+          }
+          
+          this.replayStep++;
+          this.ui.setReplayMode(true, this.replayStep, this.lastGameHistory.length);
+
+          // Check if we just reached the end of the history
+          if (this.replayStep === this.lastGameHistory.length) {
+            this.triggerReplayEndState();
+          }
+        }
+        break;
+
+      case 'end':
+        // Jump directly to the end of the game
+        this.ui.clearWinningHighlights();
+        this.ui.hideGameOver();
+
+        while (this.replayStep < this.lastGameHistory.length) {
+          const col = this.lastGameHistory[this.replayStep];
+          const currentPlayer = this.game.currentPlayer;
+          const row = this.game.makeMove(col, currentPlayer);
+
+          if (row !== -1) {
+            this.ui.addPiece(col, row, currentPlayer);
+          }
+          this.replayStep++;
         }
 
-        // Re-set standard indicators
-        this.ui.setTurn(this.game.currentPlayer, this.game.currentPlayer === 2);
-        this.ui.setUndoDisabled(this.game.history.length === 0);
-        this.ui.setHintDisabled(false);
+        this.ui.setReplayMode(true, this.replayStep, this.lastGameHistory.length);
+        this.triggerReplayEndState();
+        break;
+    }
+  }
 
-        // Display results overlay after brief delay
-        setTimeout(() => {
-          this.ui.showGameOver(this.lastGameWinner, this.lastGameWinningDirection);
-        }, 1500);
-        return;
+  triggerReplayEndState() {
+    if (this.lastGameWinner && this.lastGameWinner !== 'draw') {
+      const lastCol = this.lastGameHistory[this.lastGameHistory.length - 1];
+      let lastRow = -1;
+      for (let r = 0; r < 6; r++) {
+        if (this.game.get(lastCol, r) !== 0) {
+          lastRow = r;
+          break;
+        }
       }
+      this.ui.highlightWinningSequence(this.lastGameWinningCells, this.lastGameWinner, lastCol, lastRow);
+    }
 
-      const col = this.lastGameHistory[step];
-      const currentPlayer = this.game.currentPlayer;
-      const row = this.game.makeMove(col, currentPlayer);
-
-      if (row !== -1) {
-        this.ui.addPiece(col, row, currentPlayer);
+    // Delay displaying the results overlay so the winning highlight is visible
+    setTimeout(() => {
+      if (this.isReplaying) {
+        this.ui.showGameOver(this.lastGameWinner, this.lastGameWinningDirection);
       }
-
-      step++;
-      this.ui.setReplayMode(step, this.lastGameHistory.length);
-    };
-
-    // Run first step immediately, then interval
-    playNextStep();
-    this.replayInterval = setInterval(playNextStep, 800);
+    }, 1500);
   }
 }
 
