@@ -399,9 +399,9 @@ export class Connect4UI {
     });
 
     const themeNames = {
-      neon: 'Cyber Neon',
-      classic: 'Retro Classic',
-      mint: 'Mint Solar'
+      neon: 'Cyberpunk',
+      classic: 'Classic',
+      mint: 'Sunset Gold'
     };
     this.currentThemeDisplay.textContent = themeNames[theme] || theme;
   }
@@ -495,8 +495,6 @@ export class Connect4UI {
       }
     });
 
-    this.drawWinLine(cells, winner);
-
     setTimeout(() => {
       if (winner === 1) {
         this.synth.playWin();
@@ -515,32 +513,6 @@ export class Connect4UI {
     });
     this.winLineSvg.innerHTML = '';
     this.stopConfetti();
-  }
-
-  drawWinLine(cells, winner) {
-    this.winLineSvg.innerHTML = '';
-
-    const sorted = [...cells].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-    const start = sorted[0];
-    const end = sorted[3];
-
-    const x1 = start[0] * 100 + 50;
-    const y1 = start[1] * 100 + 50;
-    const x2 = end[0] * 100 + 50;
-    const y2 = end[1] * 100 + 50;
-
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', x1);
-    line.setAttribute('y1', y1);
-    line.setAttribute('x2', x2);
-    line.setAttribute('y2', y2);
-    line.setAttribute('class', 'win-path-line');
-    
-    const color = winner === 1 ? 'var(--color-player)' : 'var(--color-ai)';
-    line.style.setProperty('--win-line-color', color);
-    line.style.stroke = color;
-
-    this.winLineSvg.appendChild(line);
   }
 
   // Confetti Particle Engine

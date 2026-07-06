@@ -1,65 +1,65 @@
 /* Theme CSS Custom Variables & Tokens */
 .theme-neon {
-  --bg-color: #0a0914;
-  --bg-gradient: radial-gradient(circle at 50% 50%, #15122b 0%, #05040a 100%);
-  --panel-bg: rgba(22, 19, 44, 0.45);
+  --bg-color: #05030d;
+  --bg-gradient: radial-gradient(circle at 50% 50%, #15092e 0%, #030108 100%);
+  --panel-bg: rgba(21, 9, 46, 0.45);
   --panel-border: rgba(255, 255, 255, 0.08);
   --panel-shadow: 0 20px 45px rgba(0, 0, 0, 0.55);
   
-  --primary-glow: rgba(0, 240, 255, 0.35);
-  --secondary-glow: rgba(255, 51, 102, 0.35);
+  --primary-glow: rgba(0, 255, 210, 0.45);
+  --secondary-glow: rgba(255, 0, 127, 0.45);
   
   --text-primary: #ffffff;
-  --text-secondary: #9ea5cf;
-  --text-muted: #646a90;
+  --text-secondary: #a69ecf;
+  --text-muted: #645c90;
   
-  --color-player: #ff3366; /* Neon Pink/Red */
-  --color-ai: #00f0ff;     /* Neon Cyan */
-  --board-color: #121029;
-  --board-grad-start: #1b193d;
-  --board-grad-end: #0e0d21;
+  --color-player: #ff007f; /* Neon Magenta/Rose */
+  --color-ai: #00ffd2;     /* Neon Mint/Cyan */
+  --board-color: #100b26;
+  --board-grad-start: #1b0933;
+  --board-grad-end: #090312;
 }
 
 .theme-classic {
-  --bg-color: #0b1426;
-  --bg-gradient: radial-gradient(circle at 50% 50%, #13243f 0%, #060b14 100%);
-  --panel-bg: rgba(26, 38, 57, 0.65);
-  --panel-border: rgba(255, 255, 255, 0.06);
+  --bg-color: #0f172a;
+  --bg-gradient: none;
+  --panel-bg: #1e293b;
+  --panel-border: #334155;
   --panel-shadow: 0 20px 45px rgba(0, 0, 0, 0.5);
   
-  --primary-glow: rgba(255, 183, 3, 0.3);
-  --secondary-glow: rgba(217, 4, 41, 0.3);
+  --primary-glow: 0 0 0 transparent; /* No glows for classic solid mode */
+  --secondary-glow: 0 0 0 transparent;
   
   --text-primary: #ffffff;
-  --text-secondary: #a3b18a;
-  --text-muted: #588157;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
   
-  --color-player: #d90429; /* Classic Red */
+  --color-player: #e63946; /* Classic Red */
   --color-ai: #ffb703;     /* Classic Yellow */
-  --board-color: #023e8a;  /* Classic Blue Board */
-  --board-grad-start: #0077b6;
-  --board-grad-end: #03045e;
+  --board-color: #0d4b91;  /* Classic Blue Board */
+  --board-grad-start: #0d4b91;
+  --board-grad-end: #0a3d75;
 }
 
 .theme-mint {
-  --bg-color: #1a1e1a;
-  --bg-gradient: radial-gradient(circle at 50% 50%, #2b3531 0%, #101210 100%);
-  --panel-bg: rgba(43, 53, 49, 0.55);
-  --panel-border: rgba(255, 255, 255, 0.06);
-  --panel-shadow: 0 20px 45px rgba(0, 0, 0, 0.5);
+  --bg-color: #120902;
+  --bg-gradient: radial-gradient(circle at 50% 50%, #291202 0%, #060200 100%);
+  --panel-bg: rgba(41, 18, 2, 0.55);
+  --panel-border: rgba(255, 255, 255, 0.05);
+  --panel-shadow: 0 20px 45px rgba(0, 0, 0, 0.55);
   
-  --primary-glow: rgba(247, 127, 0, 0.3);
-  --secondary-glow: rgba(82, 183, 136, 0.3);
+  --primary-glow: rgba(255, 195, 0, 0.45);
+  --secondary-glow: rgba(255, 77, 0, 0.45);
   
   --text-primary: #ffffff;
-  --text-secondary: #cad2c5;
-  --text-muted: #84a98c;
+  --text-secondary: #ebdcd0;
+  --text-muted: #ad8368;
   
-  --color-player: #52b788; /* Mint Green */
-  --color-ai: #f77f00;     /* Warm Amber/Orange */
-  --board-color: #2b3d36;
-  --board-grad-start: #475f55;
-  --board-grad-end: #1b2622;
+  --color-player: #ff4d00; /* Sunset Orange/Red */
+  --color-ai: #ffc300;     /* Gold/Yellow */
+  --board-color: #2b1403;
+  --board-grad-start: #3d1c04;
+  --board-grad-end: #1a0a01;
 }
 
 :root {
@@ -148,15 +148,15 @@ body {
 }
 
 .theme-dot-btn[data-value="neon"] {
-  background: linear-gradient(135deg, #ff3366, #00f0ff);
+  background: linear-gradient(135deg, #ff007f, #00ffd2);
 }
 
 .theme-dot-btn[data-value="classic"] {
-  background: linear-gradient(135deg, #d90429, #ffb703);
+  background: linear-gradient(135deg, #e63946, #ffb703);
 }
 
 .theme-dot-btn[data-value="mint"] {
-  background: linear-gradient(135deg, #52b788, #f77f00);
+  background: linear-gradient(135deg, #ff4d00, #ffc300);
 }
 
 .theme-dot-btn:hover {
