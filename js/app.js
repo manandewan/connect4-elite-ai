@@ -1,8 +1,8 @@
 // js/app.js - Application Orchestrator Module
 // Coordinates the core game state (game.js), UI/Audio rendering (ui.js), and the AI Web Worker.
 
-import { Connect4Game } from './game.js?v=1.2.0';
-import { Connect4UI } from './ui.js?v=1.2.0';
+import { Connect4Game } from './game.js?v=1.2.1';
+import { Connect4UI } from './ui.js?v=1.2.1';
 
 class Connect4App {
   constructor() {
@@ -53,7 +53,7 @@ class Connect4App {
   // Set up the AI background worker thread
   initWorker() {
     try {
-      this.worker = new Worker(new URL('./worker.js?v=1.2.0', import.meta.url));
+      this.worker = new Worker(new URL('./worker.js?v=1.2.1', import.meta.url));
       
       this.worker.onmessage = (e) => {
         const { bestMove } = e.data;
@@ -200,7 +200,7 @@ class Connect4App {
     } else {
       // Fallback
       setTimeout(async () => {
-        const { getBestMove } = await import('./ai.js?v=1.2.0');
+        const { getBestMove } = await import('./ai.js?v=1.2.1');
         let bestMove;
         
         const isEasyRand = (this.difficulty === 'easy' && Math.random() < 0.65);

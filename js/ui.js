@@ -766,7 +766,7 @@ export class Connect4UI {
     this.tutOptinModal.classList.add('hidden');
   }
 
-  showTutorialBubble(stepIndex) {
+  async showTutorialBubble(stepIndex) {
     this.hideTutorialBubble();
     
     const steps = [
@@ -810,7 +810,14 @@ export class Connect4UI {
 
     // Spotlight highlight target
     step.target.classList.add('tutorial-highlight');
-    
+
+    // Scroll the highlighted element into view so mobile users can see it,
+    // then recalculate the bounding box after the scroll settles.
+    step.target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+
+    // Wait briefly for the smooth scroll to settle before positioning the bubble
+    await new Promise(resolve => setTimeout(resolve, 350));
+
     // Position bubble relative to target bounding box
     const rect = step.target.getBoundingClientRect();
     const scrollY = window.scrollY;
