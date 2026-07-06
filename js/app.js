@@ -1,8 +1,8 @@
 // js/app.js - Application Orchestrator Module
 // Coordinates the core game state (game.js), UI/Audio rendering (ui.js), and the AI Web Worker.
 
-import { Connect4Game } from './game.js?v=1.1.0';
-import { Connect4UI } from './ui.js?v=1.1.0';
+import { Connect4Game } from './game.js?v=1.1.9';
+import { Connect4UI } from './ui.js?v=1.1.9';
 
 class Connect4App {
   constructor() {
@@ -53,7 +53,7 @@ class Connect4App {
   // Set up the AI background worker thread
   initWorker() {
     try {
-      this.worker = new Worker(new URL('./worker.js?v=1.1.0', import.meta.url));
+      this.worker = new Worker(new URL('./worker.js?v=1.1.9', import.meta.url));
       
       this.worker.onmessage = (e) => {
         const { bestMove } = e.data;
@@ -80,7 +80,8 @@ class Connect4App {
       (config) => this.handleConfigChange(config),
       (action) => this.handleReplayAction(action),
       (col, isHovering) => this.handleColumnHover(col, isHovering),
-      (tutAction) => this.handleTutorialAction(tutAction)
+      (tutAction) => this.handleTutorialAction(tutAction),
+      () => this.exitToLobby()
     );
 
     // Apply default starting theme & display
@@ -108,6 +109,11 @@ class Connect4App {
     if (localStorage.getItem('connect4_tut_completed') !== 'true') {
       this.ui.showTutorialOptin();
     }
+  }
+
+  exitToLobby() {
+    this.resetGame();
+    this.ui.showHomeScreen();
   }
 
   resetGame() {
@@ -175,9 +181,10 @@ class Connect4App {
     this.ui.setTurn(2, true); // Update turn label to AI and show thinking indicator
 
     const depthMap = {
-      easy: 2,
-      medium: 4,
-      elite: 8
+      easy: 1,
+      medium: 3,
+      elite: 5,
+      ultimate: 8
     };
     const depth = depthMap[this.difficulty] || 8;
 
@@ -187,13 +194,24 @@ class Connect4App {
         board: [...this.game.board],
         depth: depth,
         aiPlayer: 2,
-        type: 'aiMove'
+        type: 'aiMove',
+        difficulty: this.difficulty
       });
     } else {
       // Fallback
       setTimeout(async () => {
-        const { getBestMove } = await import('./ai.js?v=1.1.0');
-        const bestMove = getBestMove([...this.game.board], depth, 2);
+        const { getBestMove } = await import('./ai.js?v=1.1.9');
+        let bestMove;
+        
+        const isEasyRand = (this.difficulty === 'easy' && Math.random() < 0.65);
+        const isMedRand = (this.difficulty === 'medium' && Math.random() < 0.15);
+        
+        if (isEasyRand || isMedRand) {
+          const validMoves = this.game.getValidMoves();
+          bestMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+        } else {
+          bestMove = getBestMove([...this.game.board], depth, 2);
+        }
         this.isThinking = false;
         this.executeAIMove(bestMove);
       }, 50);
@@ -415,7 +433,7 @@ class Connect4App {
         break;
 
       case 'next':
-        if (this.tutStep < 3) {
+        if (this.tutStep < 4) {
           this.tutStep++;
           this.ui.showTutorialBubble(this.tutStep);
         } else {

@@ -2,7 +2,28 @@
 // Performs high-performance minimax calculations off the main thread.
 
 self.onmessage = function(e) {
-  const { board, depth, aiPlayer, type } = e.data;
+  const { board, depth, aiPlayer, type, difficulty } = e.data;
+  
+  // Easy: 65% chance of a random move
+  if (difficulty === 'easy' && Math.random() < 0.65) {
+    const validMoves = getValidMoves(board);
+    if (validMoves.length > 0) {
+      const bestMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+      self.postMessage({ bestMove, type });
+      return;
+    }
+  }
+
+  // Medium: 15% chance of a random move
+  if (difficulty === 'medium' && Math.random() < 0.15) {
+    const validMoves = getValidMoves(board);
+    if (validMoves.length > 0) {
+      const bestMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+      self.postMessage({ bestMove, type });
+      return;
+    }
+  }
+  
   const bestMove = getBestMove(board, depth, aiPlayer);
   self.postMessage({ bestMove, type });
 };

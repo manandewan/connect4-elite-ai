@@ -167,7 +167,7 @@ export class Connect4UI {
     this.ghostPiece = null;
     
     // Active configuration selectors inside lobby
-    this.selectedDifficulty = 'elite';
+    this.selectedDifficulty = 'ultimate';
     this.selectedStarter = 'player';
     this.selectedTheme = 'neon';
   }
@@ -250,7 +250,7 @@ export class Connect4UI {
     });
   }
 
-  setupEventListeners(onColumnClick, onReset, onUndo, onConfigChange, onReplayAction, onColumnHover, onTutorialAction) {
+  setupEventListeners(onColumnClick, onReset, onUndo, onConfigChange, onReplayAction, onColumnHover, onTutorialAction, onExitToLobby) {
     const handleColumnSelect = (colIndex) => {
       this.synth.init();
       onColumnClick(colIndex);
@@ -276,7 +276,7 @@ export class Connect4UI {
     // Control buttons
     this.resetBtn.addEventListener('click', () => {
       this.synth.playClick();
-      onReset();
+      onExitToLobby();
     });
 
     this.playAgainBtn.addEventListener('click', () => {
@@ -373,8 +373,13 @@ export class Connect4UI {
       });
     };
 
-    setupLobbySelectors('.difficulty-selector', 'selectedDifficulty', () => {});
+    setupLobbySelectors('.difficulty-selector', 'selectedDifficulty', () => {
+      this.updateStartButtonText(this.selectedDifficulty);
+    });
     setupLobbySelectors('.starter-selector', 'selectedStarter', () => {});
+
+    // Set initial start button text matching default selection
+    this.updateStartButtonText(this.selectedDifficulty);
 
     // Floating Theme Selector click listeners (Bottom-Left)
     this.themeDotBtns.forEach(btn => {
@@ -469,11 +474,22 @@ export class Connect4UI {
 
   updateDifficultyDisplay(difficulty) {
     const difficulties = {
-      easy: 'Easy AI (2 plies)',
-      medium: 'Medium AI (4 plies)',
-      elite: 'Elite AI (8 plies)'
+      easy: 'Easy AI',
+      medium: 'Medium AI',
+      elite: 'Hard AI',
+      ultimate: 'Elite AI'
     };
     this.currentDifficultyDisplay.textContent = difficulties[difficulty] || difficulty;
+  }
+
+  updateStartButtonText(difficulty) {
+    const titles = {
+      easy: 'CHALLENGE EASY AI',
+      medium: 'CHALLENGE MEDIUM AI',
+      elite: 'CHALLENGE HARD AI',
+      ultimate: 'CHALLENGE ELITE AI'
+    };
+    this.startMatchBtn.textContent = titles[difficulty] || 'CHALLENGE AI';
   }
 
   showGhostPiece(col, row, player) {
@@ -756,8 +772,14 @@ export class Connect4UI {
     const steps = [
       {
         target: this.boardOuter,
+        title: 'CONNECT 4 RULES',
+        text: 'Players take turns dropping red/yellow pieces. Connect 4 of your pieces in a row (horizontal, vertical, or diagonal) to win!',
+        pos: 'right'
+      },
+      {
+        target: this.boardOuter,
         title: 'GHOST PREVIEW',
-        text: 'Hover over columns to see exactly where your piece will land before dropping it.',
+        text: 'Tap/Click columns to see exactly where your piece will land before dropping it.',
         pos: 'right'
       },
       {

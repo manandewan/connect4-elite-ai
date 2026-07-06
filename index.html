@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Connect 4 Elite - Play against Advanced AI</title>
   <meta name="description" content="Play Connect 4 against a highly competitive, elite AI featuring minimax search with alpha-beta pruning. Sleek glassmorphism design with fluid animations and responsive gameplay.">
-  <link rel="stylesheet" href="style.css?v=1.1.0">
+  <link rel="stylesheet" href="style.css?v=1.1.9">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -36,18 +36,22 @@
         <!-- 1. Difficulty Cards -->
         <div class="home-section">
           <h3>SELECT DIFFICULTY</h3>
-          <div class="card-selector difficulty-selector">
+          <div class="card-selector difficulty-selector custom-difficulty-grid">
             <div class="select-option" data-value="easy">
               <span class="opt-title">EASY</span>
-              <span class="opt-desc">2 Plies lookahead</span>
+              <span class="opt-desc">Casual play</span>
             </div>
             <div class="select-option" data-value="medium">
               <span class="opt-title">MEDIUM</span>
-              <span class="opt-desc">4 Plies lookahead</span>
+              <span class="opt-desc">Moderate match</span>
             </div>
-            <div class="select-option active" data-value="elite">
+            <div class="select-option" data-value="elite">
+              <span class="opt-title">HARD</span>
+              <span class="opt-desc">Advanced play</span>
+            </div>
+            <div class="select-option active" data-value="ultimate">
               <span class="opt-title">ELITE AI</span>
-              <span class="opt-desc">8 Plies search depth</span>
+              <span class="opt-desc">Flawless match</span>
             </div>
           </div>
         </div>
@@ -319,6 +323,6 @@
   </div>
 
   <!-- Entry Script -->
-  <script type="module" src="js/app.js?v=1.1.0"></script>
+  <script type="module" src="js/app.js?v=1.1.9"></script>
 </body>
 </html>

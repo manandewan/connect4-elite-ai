@@ -243,6 +243,96 @@ body {
 @media (max-width: 850px) {
   .game-layout {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .play-panel {
+    order: 1;
+  }
+  .controls-panel {
+    order: 2;
+  }
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 10px;
+  }
+  .card {
+    padding: 16px;
+  }
+  .controls-panel {
+    gap: 12px;
+  }
+  .controls-panel h2 {
+    font-size: 0.95rem;
+  }
+  .score-board {
+    gap: 8px;
+  }
+  .score-box {
+    padding: 8px;
+  }
+  .score-box .score-val {
+    font-size: 1.1rem;
+  }
+  .btn {
+    padding: 10px 16px;
+    font-size: 0.8rem;
+  }
+  .status-bar {
+    padding: 10px 14px;
+  }
+  #turn-text {
+    font-size: 0.75rem;
+  }
+  .logo {
+    font-size: 1.7rem;
+  }
+  .logo .sub-logo {
+    font-size: 0.65rem;
+  }
+  .floating-theme-selector {
+    bottom: 12px;
+    left: 12px;
+    padding: 6px 10px;
+  }
+  .theme-label {
+    font-size: 0.6rem;
+  }
+}
+
+@media (max-width: 420px) {
+  body {
+    padding: 6px;
+  }
+  .logo {
+    font-size: 1.35rem;
+    letter-spacing: 2px;
+  }
+  .tagline {
+    font-size: 0.7rem;
+  }
+  .card-selector {
+    grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
+  }
+  .select-option {
+    padding: 8px;
+  }
+  .select-option .opt-title {
+    font-size: 0.7rem;
+  }
+  .select-option .opt-desc {
+    font-size: 0.58rem;
+  }
+  .replay-controls {
+    gap: 8px;
+  }
+  .rep-btn {
+    width: 30px;
+    height: 30px;
+  }
+  #replay-status-text {
+    font-size: 0.7rem;
   }
 }
 
@@ -890,6 +980,10 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   gap: 10px;
   width: 100%;
+}
+
+.custom-difficulty-grid {
+  grid-template-columns: repeat(2, 1fr) !important;
 }
 
 .select-option {
