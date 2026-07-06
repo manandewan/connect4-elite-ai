@@ -778,7 +778,7 @@ export class Connect4UI {
       },
       {
         target: this.boardOuter,
-        title: 'GHOST PREVIEW',
+        title: 'DROP YOUR PIECE',
         text: 'Tap or click the column you want to drop your piece in.',
         pos: 'right'
       },
