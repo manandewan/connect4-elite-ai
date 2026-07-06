@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Connect 4 Elite - Play against Advanced AI</title>
   <meta name="description" content="Play Connect 4 against a highly competitive, elite AI featuring minimax search with alpha-beta pruning. Sleek glassmorphism design with fluid animations and responsive gameplay.">
-  <link rel="stylesheet" href="style.css?v=1.0.4">
+  <link rel="stylesheet" href="style.css?v=1.0.5">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -171,7 +171,7 @@
         </div>
 
         <div class="board-outer-container">
-          <!-- Interactive Column Indicators above the board -->
+          <!-- Interactive Column Indicators -->
           <div id="interactive-headers" class="board-headers">
             <div class="header-col" data-col="0"></div>
             <div class="header-col" data-col="1"></div>
@@ -184,15 +184,13 @@
 
           <!-- Main Game Board Container -->
           <div id="game-board" class="board-container">
-            <!-- Game pieces layer (behind front cutout cover) -->
             <div id="pieces-layer" class="pieces-layer"></div>
             
-            <!-- SVG Overlay Mask to cut out circles -->
+            <!-- SVG Overlay Mask -->
             <svg id="board-mask-svg" viewBox="0 0 700 600" preserveAspectRatio="none" class="board-mask-svg">
               <defs>
                 <mask id="grid-mask">
                   <rect width="700" height="600" fill="white" />
-                  <!-- 7 columns by 6 rows of circular holes -->
                   <!-- Row 0 -->
                   <circle cx="50" cy="50" r="38" fill="black" />
                   <circle cx="150" cy="50" r="38" fill="black" />
@@ -243,7 +241,6 @@
                   <circle cx="650" cy="550" r="38" fill="black" />
                 </mask>
               </defs>
-              <!-- Drawn board covering the pieces behind it, masked by circles -->
               <rect width="700" height="600" fill="url(#board-glow-grad)" mask="url(#grid-mask)" class="board-plate" />
               
               <linearGradient id="board-glow-grad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -252,12 +249,10 @@
               </linearGradient>
             </svg>
 
-            <!-- SVG Overlay layer for the winning connection path (Z-index 2.5) -->
-            <svg id="win-line-svg" viewBox="0 0 700 600" preserveAspectRatio="none" class="win-line-svg">
-              <!-- Animated drawing path will be appended here upon victory -->
-            </svg>
+            <!-- SVG win line (kept for compatibility, though win-line drawing is disabled) -->
+            <svg id="win-line-svg" viewBox="0 0 700 600" preserveAspectRatio="none" class="win-line-svg"></svg>
             
-            <!-- Interactive Hover column glow overlay (Z-index 2) -->
+            <!-- Hover column glow overlay -->
             <div class="grid-glow-columns">
               <div class="glow-col" data-col="0"></div>
               <div class="glow-col" data-col="1"></div>
@@ -292,7 +287,35 @@
     </div>
   </div>
 
+  <!-- TUTORIAL DIMMING OVERLAY -->
+  <div id="tutorial-overlay" class="tutorial-overlay hidden"></div>
+
+  <!-- TUTORIAL OPT-IN DIALOG -->
+  <div id="tutorial-optin-modal" class="overlay hidden">
+    <div class="overlay-content card">
+      <h2 style="font-family: var(--font-display); color: var(--color-ai); letter-spacing: 2px;">NEW PLAYER?</h2>
+      <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.5; margin: 8px 0;">Would you like a quick 4-step interactive guide to learn about column previews, themes, undos, and replay modes?</p>
+      <div class="overlay-buttons" style="width: 100%; display: flex; flex-direction: column; gap: 10px;">
+        <button id="tut-yes-btn" class="btn btn-primary btn-large">YES, SHOW ME</button>
+        <button id="tut-skip-btn" class="btn btn-secondary btn-large">SKIP & PLAY</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING TUTORIAL STEP BUBBLE -->
+  <div id="tutorial-bubble" class="tutorial-bubble hidden">
+    <h4 id="tut-step-title">STEP 1 OF 4</h4>
+    <p id="tut-step-text">Tutorial step description.</p>
+    <div class="tut-footer">
+      <button id="tut-prev-btn" class="tut-text-btn">BACK</button>
+      <div class="tut-footer-right">
+        <button id="tut-close-btn" class="tut-text-btn skip-color">SKIP</button>
+        <button id="tut-next-btn" class="btn btn-primary btn-small">NEXT</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Entry Script -->
-  <script type="module" src="js/app.js?v=1.0.4"></script>
+  <script type="module" src="js/app.js?v=1.0.5"></script>
 </body>
 </html>

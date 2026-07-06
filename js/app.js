@@ -26,6 +26,11 @@ class Connect4App {
     this.isHinting = false;
     this.isReplaying = false;
     this.replayStep = 0;
+    
+    // Tutorial state tracking
+    this.isTutorialActive = false;
+    this.tutStep = 0;
+    
     this.worker = null;
     
     this.initWorker();
@@ -71,7 +76,8 @@ class Connect4App {
       (config) => this.handleConfigChange(config),
       (action) => this.handleReplayAction(action),
       () => this.handleHintRequest(),
-      (col, isHovering) => this.handleColumnHover(col, isHovering)
+      (col, isHovering) => this.handleColumnHover(col, isHovering),
+      (tutAction) => this.handleTutorialAction(tutAction)
     );
 
     // Apply default starting theme & display
@@ -93,6 +99,11 @@ class Connect4App {
     
     if (difficultyChanged || starterChanged) {
       this.resetGame();
+    }
+
+    // Prompt new players with tutorial opt-in modal on match start
+    if (localStorage.getItem('connect4_tut_completed') !== 'true') {
+      this.ui.showTutorialOptin();
     }
   }
 
@@ -116,14 +127,15 @@ class Connect4App {
     this.ui.setHintDisabled(false);
     this.ui.updateScores(this.scores.player, this.scores.ai, this.scores.draws, this.streak);
     
-    if (this.game.currentPlayer === 2) {
+    // Hold starting AI calculations if the tutorial overlay is showing/active
+    if (this.game.currentPlayer === 2 && localStorage.getItem('connect4_tut_completed') === 'true') {
       this.triggerAIMove();
     }
   }
 
   handlePlayerClick(col) {
-    // Prevent moves if game over, AI's turn, AI is computing, or replaying
-    if (this.game.gameOver || this.game.currentPlayer !== 1 || this.isThinking || this.isReplaying || this.isHinting) {
+    // Prevent moves if game over, AI's turn, AI is computing, replaying, or tutorial active
+    if (this.game.gameOver || this.game.currentPlayer !== 1 || this.isThinking || this.isReplaying || this.isHinting || this.isTutorialActive) {
       return;
     }
 
@@ -145,7 +157,7 @@ class Connect4App {
 
   handleColumnHover(col, isHovering) {
     // Hide ghost piece if not hovering or if actions are locked
-    if (!isHovering || this.game.gameOver || this.game.currentPlayer !== 1 || this.isThinking || this.isReplaying || this.isHinting) {
+    if (!isHovering || this.game.gameOver || this.game.currentPlayer !== 1 || this.isThinking || this.isReplaying || this.isHinting || this.isTutorialActive) {
       this.ui.hideGhostPiece();
       return;
     }
@@ -155,7 +167,7 @@ class Connect4App {
   }
 
   handleHintRequest() {
-    if (this.game.gameOver || this.game.currentPlayer !== 1 || this.isThinking || this.isReplaying || this.isHinting) {
+    if (this.game.gameOver || this.game.currentPlayer !== 1 || this.isThinking || this.isReplaying || this.isHinting || this.isTutorialActive) {
       return;
     }
 
@@ -190,7 +202,7 @@ class Connect4App {
   }
 
   triggerAIMove() {
-    if (this.game.gameOver || this.isReplaying) return;
+    if (this.game.gameOver || this.isReplaying || this.isTutorialActive) return;
 
     this.isThinking = true;
     this.ui.setTurn(2, true); // Update turn label to AI and show thinking indicator
@@ -222,7 +234,7 @@ class Connect4App {
   }
 
   executeAIMove(col) {
-    if (this.game.gameOver || this.game.currentPlayer !== 2) return;
+    if (this.game.gameOver || this.game.currentPlayer !== 2 || this.isTutorialActive) return;
 
     const row = this.game.getLowestEmptyRow(col);
     if (row === -1) {
@@ -241,7 +253,7 @@ class Connect4App {
   }
 
   undoMove() {
-    if (this.isThinking || this.isReplaying) return;
+    if (this.isThinking || this.isReplaying || this.isTutorialActive) return;
 
     this.ui.hideGameOver();
 
@@ -321,9 +333,8 @@ class Connect4App {
 
   // Chess.com Inspired Replay System logic
   handleReplayAction(action) {
-    if (!this.lastGameHistory || this.lastGameHistory.length === 0) return;
+    if (!this.lastGameHistory || this.lastGameHistory.length === 0 || this.isTutorialActive) return;
 
-    // Toggle replay mode active state
     if (!this.isReplaying) {
       this.isReplaying = true;
       this.replayStep = 0;
@@ -338,7 +349,6 @@ class Connect4App {
 
     switch (action) {
       case 'start':
-        // Reset everything back to move 0
         this.game.reset();
         this.game.setStartingPlayer(this.lastGameStarter);
         this.ui.clearBoard();
@@ -348,7 +358,6 @@ class Connect4App {
         break;
 
       case 'back':
-        // Go back 1 move
         if (this.replayStep > 0) {
           this.ui.clearWinningHighlights();
           this.ui.hideGameOver();
@@ -363,7 +372,6 @@ class Connect4App {
         break;
 
       case 'forward':
-        // Go forward 1 move
         if (this.replayStep < this.lastGameHistory.length) {
           this.ui.clearWinningHighlights();
           this.ui.hideGameOver();
@@ -379,7 +387,6 @@ class Connect4App {
           this.replayStep++;
           this.ui.setReplayMode(true, this.replayStep, this.lastGameHistory.length);
 
-          // Check if we just reached the end of the history
           if (this.replayStep === this.lastGameHistory.length) {
             this.triggerReplayEndState();
           }
@@ -387,7 +394,6 @@ class Connect4App {
         break;
 
       case 'end':
-        // Jump directly to the end of the game
         this.ui.clearWinningHighlights();
         this.ui.hideGameOver();
 
@@ -421,12 +427,58 @@ class Connect4App {
       this.ui.highlightWinningSequence(this.lastGameWinningCells, this.lastGameWinner, lastCol, lastRow);
     }
 
-    // Delay displaying the results overlay so the winning highlight is visible
     setTimeout(() => {
       if (this.isReplaying) {
         this.ui.showGameOver(this.lastGameWinner, this.lastGameWinningDirection);
       }
     }, 1500);
+  }
+
+  // Tutorial Flow orchestrations
+  handleTutorialAction(action) {
+    switch (action) {
+      case 'start':
+        this.isTutorialActive = true;
+        this.tutStep = 0;
+        this.ui.hideTutorialOptin();
+        this.ui.showTutorialBubble(this.tutStep);
+        break;
+
+      case 'skip':
+        this.isTutorialActive = false;
+        localStorage.setItem('connect4_tut_completed', 'true');
+        this.ui.hideTutorialOptin();
+        this.ui.hideTutorialBubble();
+        
+        // Start game calculations if it's the AI's starting turn
+        if (this.game.currentPlayer === 2 && !this.game.gameOver && !this.isThinking) {
+          this.triggerAIMove();
+        }
+        break;
+
+      case 'next':
+        if (this.tutStep < 3) {
+          this.tutStep++;
+          this.ui.showTutorialBubble(this.tutStep);
+        } else {
+          // Finished!
+          this.isTutorialActive = false;
+          localStorage.setItem('connect4_tut_completed', 'true');
+          this.ui.hideTutorialBubble();
+          
+          if (this.game.currentPlayer === 2 && !this.game.gameOver && !this.isThinking) {
+            this.triggerAIMove();
+          }
+        }
+        break;
+
+      case 'back':
+        if (this.tutStep > 0) {
+          this.tutStep--;
+          this.ui.showTutorialBubble(this.tutStep);
+        }
+        break;
+    }
   }
 }
 

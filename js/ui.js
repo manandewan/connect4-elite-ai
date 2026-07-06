@@ -214,6 +214,18 @@ export class Connect4UI {
     
     this.headerCols = document.querySelectorAll('.header-col');
     this.glowCols = document.querySelectorAll('.glow-col');
+
+    // Tutorial Elements
+    this.tutOverlay = document.getElementById('tutorial-overlay');
+    this.tutOptinModal = document.getElementById('tutorial-optin-modal');
+    this.tutBubble = document.getElementById('tutorial-bubble');
+    this.tutYesBtn = document.getElementById('tut-yes-btn');
+    this.tutSkipBtn = document.getElementById('tut-skip-btn');
+    this.tutPrevBtn = document.getElementById('tut-prev-btn');
+    this.tutNextBtn = document.getElementById('tut-next-btn');
+    this.tutCloseBtn = document.getElementById('tut-close-btn');
+    this.tutStepTitle = document.getElementById('tut-step-title');
+    this.tutStepText = document.getElementById('tut-step-text');
   }
 
   initConfetti() {
@@ -229,7 +241,7 @@ export class Connect4UI {
     });
   }
 
-  setupEventListeners(onColumnClick, onReset, onUndo, onConfigChange, onReplayAction, onHintRequest, onColumnHover) {
+  setupEventListeners(onColumnClick, onReset, onUndo, onConfigChange, onReplayAction, onHintRequest, onColumnHover, onTutorialAction) {
     const handleColumnSelect = (colIndex) => {
       this.synth.init();
       onColumnClick(colIndex);
@@ -313,6 +325,32 @@ export class Connect4UI {
     this.repEndBtn.addEventListener('click', () => {
       this.synth.playClick();
       onReplayAction('end');
+    });
+
+    // Tutorial overlay prompts event listeners
+    this.tutYesBtn.addEventListener('click', () => {
+      this.synth.playClick();
+      onTutorialAction('start');
+    });
+
+    this.tutSkipBtn.addEventListener('click', () => {
+      this.synth.playClick();
+      onTutorialAction('skip');
+    });
+
+    this.tutPrevBtn.addEventListener('click', () => {
+      this.synth.playClick();
+      onTutorialAction('back');
+    });
+
+    this.tutNextBtn.addEventListener('click', () => {
+      this.synth.playClick();
+      onTutorialAction('next');
+    });
+
+    this.tutCloseBtn.addEventListener('click', () => {
+      this.synth.playClick();
+      onTutorialAction('skip');
     });
 
     // Lobby config card selectors (Only Difficulty & Starter now)
@@ -696,5 +734,92 @@ export class Connect4UI {
 
   setHintDisabled(disabled) {
     this.hintBtn.disabled = disabled;
+  }
+
+  // Tutorial Dialog Helper Methods
+  showTutorialOptin() {
+    this.tutOptinModal.classList.remove('hidden');
+  }
+
+  hideTutorialOptin() {
+    this.tutOptinModal.classList.add('hidden');
+  }
+
+  showTutorialBubble(stepIndex) {
+    this.hideTutorialBubble();
+    
+    const steps = [
+      {
+        target: this.boardOuter,
+        title: '1 OF 4: GHOST PREVIEWS',
+        text: 'Hover your cursor over the board columns to see a transparent preview indicating exactly where your piece will land.',
+        pos: 'right'
+      },
+      {
+        target: this.floatingThemeSelector,
+        title: '2 OF 4: PERSISTENT THEMES',
+        text: 'Swap visual designs instantly mid-game using these floating dots: Classic, Cyberpunk, or Sunset Gold.',
+        pos: 'top-left'
+      },
+      {
+        target: this.hintBtn.parentElement, // Selects the action buttons panel container
+        title: '3 OF 4: PLAY HELPERS',
+        text: 'Tap GET HINT to calculate optimal moves in real-time, or UNDO MOVE to correct misplays.',
+        pos: 'right-sidebar'
+      },
+      {
+        target: this.defaultTurnIndicator.parentElement, // Selects the status bar container
+        title: '4 OF 4: SOUNDS & REPLAYS',
+        text: 'Toggle retro sound effects, or review completed games step-by-step using interactive replays.',
+        pos: 'bottom'
+      }
+    ];
+
+    const step = steps[stepIndex];
+    if (!step) return;
+
+    this.tutStepTitle.textContent = `STEP ${step.title}`;
+    this.tutStepText.textContent = step.text;
+
+    // Spotlight highlight target
+    step.target.classList.add('tutorial-highlight');
+    
+    // Position bubble relative to target bounding box
+    const rect = step.target.getBoundingClientRect();
+    const scrollY = window.scrollY;
+    const scrollX = window.scrollX;
+
+    this.tutOverlay.classList.remove('hidden');
+    this.tutBubble.classList.remove('hidden');
+    this.tutBubble.className = 'tutorial-bubble'; // Reset positions
+
+    if (step.pos === 'right') {
+      this.tutBubble.style.top = `${rect.top + scrollY + rect.height / 2 - 80}px`;
+      this.tutBubble.style.left = `${rect.right + scrollX + 20}px`;
+      this.tutBubble.classList.add('pos-right');
+    } else if (step.pos === 'top-left') {
+      this.tutBubble.style.top = `${rect.top + scrollY - 170}px`;
+      this.tutBubble.style.left = `${rect.left + scrollX}px`;
+      this.tutBubble.classList.add('pos-bottom');
+    } else if (step.pos === 'right-sidebar') {
+      this.tutBubble.style.top = `${rect.top + scrollY}px`;
+      this.tutBubble.style.left = `${rect.right + scrollX + 20}px`;
+      this.tutBubble.classList.add('pos-right');
+    } else if (step.pos === 'bottom') {
+      this.tutBubble.style.top = `${rect.bottom + scrollY + 20}px`;
+      this.tutBubble.style.left = `${rect.left + scrollX + rect.width / 2 - 145}px`;
+      this.tutBubble.classList.add('pos-bottom');
+    }
+
+    this.tutPrevBtn.style.display = stepIndex === 0 ? 'none' : 'inline-block';
+    this.tutNextBtn.textContent = stepIndex === steps.length - 1 ? 'FINISH' : 'NEXT';
+  }
+
+  hideTutorialBubble() {
+    this.tutBubble.classList.add('hidden');
+    this.tutOverlay.classList.add('hidden');
+    document.querySelectorAll('.tutorial-highlight').forEach(el => {
+      el.classList.remove('tutorial-highlight');
+    });
   }
 }
