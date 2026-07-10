@@ -5,7 +5,23 @@
 const COLS = 7;
 const ROWS = 6;
 
-export function getBestMove(board, depth, aiPlayer) {
+export function getBestMove(board, depth, aiPlayer, difficulty) {
+  const totalPieces = board.filter(cell => cell !== 0).length;
+  
+  // Decide randomness threshold based on game progress (first 15 moves)
+  let randChance = 0;
+  if (difficulty === 'easy') {
+    // 30% chance of randomness for the first 15 moves, 65% afterwards
+    randChance = totalPieces < 15 ? 0.30 : 0.65;
+  } else if (difficulty === 'medium') {
+    // 5% chance of randomness for the first 15 moves, 15% afterwards
+    randChance = totalPieces < 15 ? 0.05 : 0.15;
+  }
+
+  if (randChance > 0 && Math.random() < randChance) {
+    return getDecentRandomMove(board, aiPlayer);
+  }
+
   const validMoves = getValidMoves(board);
   if (validMoves.length === 0) return -1;
   if (validMoves.length === 1) return validMoves[0];
@@ -235,4 +251,64 @@ function evaluateWindow4(w0, w1, w2, w3, aiPlayer, humanPlayer) {
   if (humanCount === 2 && emptyCount === 2) return -10;
 
   return 0;
+}
+
+// Generate a decent random move that prevents immediate losses and blunders
+function getDecentRandomMove(board, aiPlayer) {
+  const validMoves = getValidMoves(board);
+  if (validMoves.length === 0) return -1;
+  if (validMoves.length === 1) return validMoves[0];
+
+  // 1. Immediate win check for AI
+  for (const col of validMoves) {
+    const row = getLowestEmptyRow(board, col);
+    board[row * COLS + col] = aiPlayer;
+    if (checkWinAt(board, col, row, aiPlayer)) {
+      board[row * COLS + col] = 0; // undo
+      return col;
+    }
+    board[row * COLS + col] = 0; // undo
+  }
+
+  // 2. Immediate block check for player win
+  const humanPlayer = aiPlayer === 1 ? 2 : 1;
+  for (const col of validMoves) {
+    const row = getLowestEmptyRow(board, col);
+    board[row * COLS + col] = humanPlayer;
+    if (checkWinAt(board, col, row, humanPlayer)) {
+      board[row * COLS + col] = 0; // undo
+      return col;
+    }
+    board[row * COLS + col] = 0; // undo
+  }
+
+  // 3. Filter out moves that would immediately let the opponent win on their next turn
+  const safeMoves = [];
+  for (const col of validMoves) {
+    const row = getLowestEmptyRow(board, col);
+    board[row * COLS + col] = aiPlayer;
+    
+    const nextRow = row - 1;
+    let leadsToWin = false;
+    if (nextRow >= 0) {
+      board[nextRow * COLS + col] = humanPlayer;
+      if (checkWinAt(board, col, nextRow, humanPlayer)) {
+        leadsToWin = true;
+      }
+      board[nextRow * COLS + col] = 0; // undo
+    }
+    
+    board[row * COLS + col] = 0; // undo
+    
+    if (!leadsToWin) {
+      safeMoves.push(col);
+    }
+  }
+
+  if (safeMoves.length > 0) {
+    return safeMoves[Math.floor(Math.random() * safeMoves.length)];
+  }
+
+  // Fallback if no safe moves are available
+  return validMoves[Math.floor(Math.random() * validMoves.length)];
 }
